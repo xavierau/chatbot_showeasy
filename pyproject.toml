@@ -1,0 +1,18 @@
+[project]
+name = "showeasy-chatbot"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+    "dspy>=3.0.3",
+    "fastapi>=0.118.0",
+    "langfuse>=3.6.1",
+    "mysql-connector-python>=9.4.0",
+    "openinference-instrumentation>=0.1.38",
+    "openinference-instrumentation-dspy>=0.1.29",
+    "pydantic>=2.11.9",
+    "python-dotenv>=1.1.1",
+    "readability-lxml>=0.8.4.1",
+    "uvicorn[standard]>=0.37.0",
+]
