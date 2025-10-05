@@ -53,12 +53,18 @@ def _format_event_results(results: List[Dict], event_platform_base_url: str) -> 
     """
     Format event query results into natural language summary.
 
+    IMPORTANT: Every event result MUST include a URL using the event ID.
+    URLs are constructed as: {EVENT_PLATFORM_HOST}/events/{event.id}
+
     Args:
-        results: List of event dictionaries from database.
+        results: List of event dictionaries from database. Each MUST contain 'id' field.
         event_platform_base_url: Base URL for event platform.
 
     Returns:
-        Formatted string summarizing the events.
+        Formatted string summarizing the events with URLs always included.
+
+    Raises:
+        ValueError: If any event is missing the required 'id' field.
     """
     if not results:
         return "No events found matching the specified criteria."
@@ -73,11 +79,13 @@ def _format_event_results(results: List[Dict], event_platform_base_url: str) -> 
         if event.get('start_time'):
             summary += f", Starts on: '{event.get('start_time')}'"
 
-        # Generate URL with UTM tracking - use slug if available, otherwise use id
-        event_identifier = event.get('slug') or event.get('id')
-        if event_identifier:
-            utm_params = "utm_source=chatbot&utm_medium=ai&utm_campaign=event_search"
-            summary += f", Link: {event_platform_base_url}/events/{event_identifier}?{utm_params}"
+        # ALWAYS use event.id for URL construction (REQUIRED field)
+        event_id = event.get('id')
+        if not event_id:
+            raise ValueError(f"Event missing required 'id' field: {event}")
+
+        utm_params = "utm_source=chatbot&utm_medium=ai&utm_campaign=event_search"
+        summary += f", Link: {event_platform_base_url}/events/{event_id}?{utm_params}"
 
         summaries.append(summary)
 
