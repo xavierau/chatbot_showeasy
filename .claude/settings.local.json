@@ -9,7 +9,8 @@
       "Bash(git gc:*)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(uv sync:*)"
     ],
     "deny": [],
     "ask": []

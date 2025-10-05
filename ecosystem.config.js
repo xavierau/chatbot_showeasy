@@ -3,7 +3,7 @@ module.exports = {
     name: 'showeasy-chatbot',
     script: 'src/main.py',
     interpreter: '.venv/bin/python',
-    cwd: '/Users/xavierau/Code/python/showeasy_chatbot',
+    cwd: '~/chatbot_showeasy',
     instances: 1,
     autorestart: true,
     watch: false,
