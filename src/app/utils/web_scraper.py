@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from readability import Document
+from markdownify import markdownify as md
 import os
 
 def get_page_content(url: str) -> str:
@@ -19,13 +20,12 @@ def get_page_content(url: str) -> str:
         response = requests.get(url, timeout=5, verify=verify_ssl)
         response.raise_for_status()  # Raise an exception for bad status codes
 
-        print(f"Fetching URL: {url}", response.text)
         doc = Document(response.text)
         summary_html = doc.summary()
+        article_markdown = md(summary_html)
+        print(f"Fetching URL Summary: {url}", article_markdown)
 
-        # Use BeautifulSoup to extract text from the cleaned HTML
-        soup = BeautifulSoup(summary_html, 'html.parser')
-        return ' '.join(soup.get_text().split())
+        return article_markdown
     except requests.RequestException as e:
         print(f"Error fetching URL {url}: {e}")
         return ""

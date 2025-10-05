@@ -62,3 +62,4 @@ Thumbs.db
 
 # Project specific
 *.log
+memory_storage/
