@@ -20,7 +20,7 @@ This schema focuses on the four main tables required to find events and their de
 - **Smart Keyword Logic:** The user's main `query` (e.g., "interesting events") should be broken into keywords ("interesting", "events"). The generated SQL should find events where **any** of these keywords appear in `events.name`, `events.description`, or `categories.name`. All keyword checks must be combined with `OR`. Do not use `AND` to connect different keywords.
 - **Case-Insensitive Searches:** All `LIKE` comparisons MUST be case-insensitive. Achieve this by wrapping the column expression in the `LOWER()` function.
 - **JSON Columns:** The `name`, `description`, `city`, and `slug` columns are JSON. Use `JSON_UNQUOTE(JSON_EXTRACT(column, '$.en'))` to query the English text.
-- **Required SELECT Columns:** ALL queries MUST include `JSON_UNQUOTE(JSON_EXTRACT(e.slug, '$.en')) AS slug` in the SELECT clause. The slug is required to construct event detail page URLs.
+- **Required SELECT Columns:** ALL queries MUST include both `e.id AS id` and `JSON_UNQUOTE(JSON_EXTRACT(e.slug, '$.en')) AS slug` in the SELECT clause. These fields are required to construct event detail page URLs (slug is preferred, but id is used as fallback when slug is NULL).
 
 #### 1. `events` table
 This is the main table for events.

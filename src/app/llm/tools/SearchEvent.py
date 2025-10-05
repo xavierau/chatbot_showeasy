@@ -37,6 +37,7 @@ def _search_logic(
     db_user = os.getenv("DB_USER")
     db_password = os.getenv("DB_PASSWORD")
     db_name = os.getenv("DB_NAME")
+    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://eventplatform.test")
 
     if not all([db_host, db_user, db_password, db_name]):
         return {"error": "Database environment variables are not set. Cannot perform search."}
@@ -88,10 +89,15 @@ def _search_logic(
                             summary += f", Location: '{event.get('city')}'"
                         if event.get('start_time'):
                             summary += f", Starts on: '{event.get('start_time')}'"
-                        if event.get('slug'):
-                            summary += f", Link: https://eventplatform.test/events/{event.get('slug')}"
+
+                        # Generate URL with UTM tracking - use slug if available, otherwise use id
+                        event_identifier = event.get('slug') or event.get('id')
+                        if event_identifier:
+                            utm_params = "utm_source=chatbot&utm_medium=ai&utm_campaign=event_search"
+                            summary += f", Link: {event_platform_base_url}/events/{event_identifier}?{utm_params}"
+
                         summaries.append(summary)
-                    
+
                     full_summary = " ".join(summaries)
                     return {"events": f"Found {len(results)} events. Details: {full_summary}"}\
 
