@@ -7,19 +7,11 @@ echo "🚀 Deploying ShowEasy Chatbot..."
 
 # Pull latest code
 echo "📥 Pulling latest code..."
-git pull origin main
+git pull origin master
 
-# Create virtual environment if it doesn't exist
-if [ ! -d ".venv" ]; then
-    echo "📦 Creating virtual environment..."
-    python3.11 -m venv .venv
-fi
-
-# Activate virtual environment and install dependencies
+# Install dependencies with uv
 echo "📦 Installing dependencies..."
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -e .
+uv sync
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
