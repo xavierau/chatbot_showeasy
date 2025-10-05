@@ -11,7 +11,7 @@ class EventSearchSignature(dspy.Signature):
     """
 
     question: str = dspy.InputField(desc="The user's current message/question.")
-    previous_conversation: list[ConversationMessage] = dspy.InputField(
+    previous_conversation: dspy.History = dspy.InputField(
         desc="The previous messages in the conversation."
     )
 

@@ -9,7 +9,7 @@ class SearchQueryAnalysisSignature(dspy.Signature):
     """
 
     user_message = dspy.InputField(desc="The user's current message about searching for events.")
-    previous_conversation: List[ConversationMessage] = dspy.InputField(desc="The previous turns of the conversation, providing context.")
+    previous_conversation: dspy.History = dspy.InputField(desc="The previous turns of the conversation, providing context.")
     
     is_specific: bool = dspy.OutputField(
         desc="A boolean flag. Set to True if the user's message contains specific criteria (like category, date, location, or specific keywords beyond just 'interesting' or 'fun') OR if the current message, in conjunction with the previous conversation, provides enough detail to perform a meaningful search. Set to False if the query is still too general.",

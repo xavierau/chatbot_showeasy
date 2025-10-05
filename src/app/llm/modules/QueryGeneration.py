@@ -2,6 +2,7 @@ import dspy
 from app.models import SearchEventInput
 from app.llm.signatures import QueryGenerationSignature
 from typing import Optional
+from langfuse import observe
 
 
 class QueryGeneration(dspy.Module):
@@ -72,6 +73,7 @@ This table stores the location details for event occurrences.
 
 *__Relationship:__ `event_occurrences.venue_id` links to `venues.id`.*"""
 
+    @observe()
     def forward(self, request: SearchEventInput, previous_query: Optional[str] = None, db_error: Optional[str] = None) -> str:
         """Generates a MySQL query based on the structured search request."""
         criteria = []

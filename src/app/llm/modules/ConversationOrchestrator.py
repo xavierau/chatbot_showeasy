@@ -1,4 +1,5 @@
 import dspy
+from langfuse import observe
 from ..signatures import (
     UserMessageIntentSignature,
     UserConversationSignature,
