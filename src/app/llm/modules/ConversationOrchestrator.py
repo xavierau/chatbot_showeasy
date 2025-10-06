@@ -38,7 +38,6 @@ class ConversationOrchestrator(dspy.Module):
         # Event Search Agent (ReAct)
         self.event_search_agent = dspy.ReAct(EventSearchSignature, tools=[SearchEvent])
 
-    @observe()
     def forward(self, user_message: str, previous_conversation: list[ConversationMessage], page_context: str = "") -> str:
         """Process user message through guardrails, intent classification, and response generation.
 
@@ -52,7 +51,7 @@ class ConversationOrchestrator(dspy.Module):
         """
         # ===== STEP 1: Pre-Guardrails (Input Validation) =====
         try:
-            guardrail_result = self.pre_guardrails.forward(
+            guardrail_result = self.pre_guardrails(
                 user_message=user_message,
                 previous_conversation=previous_conversation,
                 page_context=page_context
@@ -119,7 +118,7 @@ class ConversationOrchestrator(dspy.Module):
 
         # ===== STEP 4: Post-Guardrails (Output Validation) =====
         try:
-            output_validation = self.post_guardrails.forward(
+            output_validation = self.post_guardrails(
                 agent_response=response_message,
                 user_query=user_message,
                 response_intent=str(intent)
