@@ -19,7 +19,8 @@
       "WebFetch(domain:github.com)",
       "Bash(uv pip:*)",
       "WebFetch(domain:arize-ai.github.io)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(PYTHONPATH=/Users/xavierau/Code/python/showeasy_chatbot/src python -c \"from app.llm.guardrails import PreGuardrails, PostGuardrails; from app.llm.signatures import InputGuardrailSignature, OutputGuardrailSignature; from app.models import Intent; print(''✓ All imports successful'')\")"
     ],
     "deny": [],
     "ask": []

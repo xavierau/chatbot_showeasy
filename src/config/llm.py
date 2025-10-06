@@ -24,6 +24,8 @@ def configure_llm():
 
     DSPyInstrumentor().instrument()
 
+    dspy.settings.configure(track_usage=True)
+
     if llm_provider == "gemini":
         lm = dspy.LM(f"{llm_provider}/{llm_model}", api_key=os.getenv('GOOGLE_API_KEY'))
         dspy.configure(lm=lm)
