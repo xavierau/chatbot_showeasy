@@ -3,6 +3,8 @@ import dspy
 class AgentResponseSignature(dspy.Signature):
     """Refine agent output to match Event Platform Customer Service Agent brand voice and sales strategy.
 
+    **CRITICAL: Always respond in the exact same language as the user's input. If the user writes in Chinese, respond in Chinese. If in English, respond in English. If in Spanish, respond in Spanish, etc.**
+
     **Your Role:**
     You are polishing the agent's response to be professional, helpful, and aligned with
     the event platform's brand voice while subtly promoting business goals.

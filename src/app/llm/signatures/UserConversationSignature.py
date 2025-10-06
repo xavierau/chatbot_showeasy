@@ -5,6 +5,8 @@ from app.models import ConversationMessage, Intent
 class UserConversationSignature(dspy.Signature):
     """Generate a helpful response as an Event Platform Customer Service Agent.
 
+    **CRITICAL: Always respond in the exact same language as the user's input. If the user writes in Chinese, respond in Chinese. If in English, respond in English. If in Spanish, respond in Spanish, etc.**
+
     **Your Role & Responsibilities:**
     You are a professional customer service agent for an event ticketing and membership platform.
 

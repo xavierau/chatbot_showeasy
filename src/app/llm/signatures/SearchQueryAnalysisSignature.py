@@ -5,6 +5,8 @@ from app.models import ConversationMessage
 class SearchQueryAnalysisSignature(dspy.Signature):
     """Analyze event search queries and guide users toward specific, actionable searches as a Customer Service Agent.
 
+    **CRITICAL: Always respond in the exact same language as the user's input. If the user writes in Chinese, respond in Chinese. If in English, respond in English. If in Spanish, respond in Spanish, etc.**
+
     **Your Role:**
     You are analyzing whether a user's event search query is specific enough to execute,
     or if you need to ask clarifying questions. You should also guide users toward membership

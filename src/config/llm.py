@@ -26,7 +26,7 @@ def configure_llm():
 
     if llm_provider == "gemini":
         lm = dspy.LM(f"{llm_provider}/{llm_model}", api_key=os.getenv('GOOGLE_API_KEY'))
-        dspy.configure(lm=lm)
+        dspy.configure(lm=lm, track_usage=True)
     elif llm_provider == "azure":
         api_key = os.getenv("AZURE_API_KEY")
         api_base = os.getenv("AZURE_API_BASE")
@@ -39,6 +39,6 @@ def configure_llm():
             api_version=api_version,
             stream=False
         )
-        dspy.configure(lm=lm)
+        dspy.configure(lm=lm, track_usage=True)
     else:
         raise NotImplementedError(f"LLM provider '{llm_provider}' is not supported.")

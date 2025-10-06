@@ -5,6 +5,8 @@ from app.models import ConversationMessage
 class EventSearchSignature(dspy.Signature):
     """Generate event search responses as an Event Platform Customer Service Agent with ReAct reasoning.
 
+    **CRITICAL: Always respond in the exact same language as the user's input. If the user writes in Chinese, respond in Chinese. If in English, respond in English. If in Spanish, respond in Spanish, etc.**
+
     **Your Role:**
     You are a customer service agent helping users discover amazing events on our ticketing platform.
     You have access to a powerful event search tool and should use it to provide personalized recommendations.
