@@ -1,54 +1,78 @@
 import dspy
 from langfuse import observe
-from ..signatures import (
-    UserMessageIntentSignature,
-    UserConversationSignature,
-    EventSearchSignature,
-    SearchQueryAnalysisSignature,
-    AgentResponseSignature,
+from ..signatures import ConversationSignature
+from ...models import ConversationMessage
+from ..tools import (
+    SearchEvent,
+    MembershipInfo,
+    TicketInfo,
+    GeneralHelp,
+    Thinking,
 )
-from ...models import ConversationMessage, Intent
-from ..tools import SearchEvent
 from ..guardrails import PreGuardrails, PostGuardrails, GuardrailViolation
 
 
 class ConversationOrchestrator(dspy.Module):
-    """Event Platform Customer Service Agent orchestrator with guardrails.
+    """Event Platform Customer Service Agent orchestrator with simplified 3-step architecture.
 
-    This orchestrator coordinates the entire conversation flow:
+    Architecture:
     1. Pre-Guardrails: Validate user input for safety and scope
-    2. Intent Classification: Determine what the user wants
-    3. Response Generation: Generate appropriate response based on intent
-    4. Post-Guardrails: Validate output for compliance and brand safety
-    5. Return safe, helpful response to user
+    2. ReAct Agent: Comprehensive reasoning and tool use for all conversation types
+    3. Post-Guardrails: Validate output for compliance and brand safety
+
+    The ReAct agent handles ALL conversation types through intelligent tool selection:
+    - Event search and discovery (SearchEvent)
+    - Membership inquiries (MembershipInfo)
+    - Ticket questions (TicketInfo)
+    - General platform help (GeneralHelp)
+    - Clarifying questions (AskClarification)
+    - Working memory/reasoning (Thinking)
+
+    Design Principles:
+    - Single Responsibility: Each tool handles one domain
+    - Composition: ReAct composes tools based on user intent
+    - Reliability: Guardrails ensure safe, compliant responses
+    - SOLID: Clean separation between tools, agent logic, and validation
     """
 
     def __init__(self):
         super().__init__()
-        # Guardrails
+
+        # Guardrails (unchanged)
         self.pre_guardrails = PreGuardrails()
         self.post_guardrails = PostGuardrails()
 
-        # Intent and Response Modules
-        self.determine_intent = dspy.Predict(UserMessageIntentSignature)
-        self.generate_response = dspy.ChainOfThought(UserConversationSignature)
-        self.analyze_search_query = dspy.Predict(SearchQueryAnalysisSignature)
-        self.agent_response = dspy.Predict(AgentResponseSignature)
+        # Comprehensive ReAct Agent with all tools
+        # ReAct naturally handles intent determination through reasoning
+        self.agent = dspy.ReAct(
+            ConversationSignature,
+            tools=[
+                Thinking,  # Working memory - should be first for reasoning before actions
+                SearchEvent,
+                MembershipInfo,
+                TicketInfo,
+                GeneralHelp,
+            ],
+            max_iters=10  # Allow multiple tool calls for complex queries
+        )
 
-        # Event Search Agent (ReAct)
-        self.event_search_agent = dspy.ReAct(EventSearchSignature, tools=[SearchEvent])
-
-    def forward(self, user_message: str, previous_conversation: list[ConversationMessage], page_context: str = "") -> str:
-        """Process user message through guardrails, intent classification, and response generation.
+    def forward(self, user_message: str, previous_conversation: list[ConversationMessage], page_context: str = "") -> dspy.Prediction:
+        """Process user message through simplified 3-step architecture.
 
         Args:
             user_message: The user's input message
-            previous_conversation: Conversation history
+            previous_conversation: Conversation history for context
             page_context: Current page context (e.g., 'event_detail_page', 'membership_page')
 
         Returns:
-            Safe, helpful response from the customer service agent
+            dspy.Prediction with 'answer' field containing the safe, helpful response
+
+        Flow:
+            1. Pre-Guardrails: Validate input safety and scope
+            2. ReAct Agent: Reason about intent and use appropriate tools
+            3. Post-Guardrails: Validate output compliance and brand safety
         """
+
         # ===== STEP 1: Pre-Guardrails (Input Validation) =====
         try:
             guardrail_result = self.pre_guardrails(
@@ -60,68 +84,39 @@ class ConversationOrchestrator(dspy.Module):
             if not guardrail_result["is_valid"]:
                 # Input violated guardrails, return friendly redirect message
                 print(f"[PreGuardrail] Input violation: {guardrail_result['violation_type']}")
-                return guardrail_result["message"]
+                return dspy.Prediction(answer=guardrail_result["message"])
 
         except GuardrailViolation as e:
             # Strict mode enabled, violation raised as exception
             print(f"[PreGuardrail] Strict violation: {e.violation_type}")
-            return e.message
+            return dspy.Prediction(answer=e.message)
 
-        # ===== STEP 2: Intent Classification =====
-        intent_prediction = self.determine_intent(
-            user_message=user_message,
-            previous_conversation=previous_conversation,
-            page_context=page_context
-        )
-        intent = intent_prediction.intent
-        print(f"[Intent] Classified as: {intent}")
-
-        # ===== STEP 3: Response Generation Based on Intent =====
-        response_message = ""
-
-        if intent == Intent.SEARCH_EVENT:
-            # Event search flow with query analysis
-            query_analysis = self.analyze_search_query(
-                user_message=user_message,
+        # ===== STEP 2: ReAct Agent (Reasoning + Tool Use) =====
+        # The agent will:
+        # - Determine user intent through reasoning
+        # - Select and call appropriate tools
+        # - Compose final response
+        # No explicit intent classification needed - ReAct handles this naturally
+        try:
+            agent_prediction = self.agent(
+                question=user_message,
                 previous_conversation=previous_conversation,
                 page_context=page_context
             )
+            response_message = agent_prediction.answer
+            print(f"[ReAct Agent] Generated response with {len(agent_prediction.trajectory) if hasattr(agent_prediction, 'trajectory') else 0} tool calls")
 
-            if not query_analysis.is_specific:
-                # Query too general, return clarifying question
-                response_message = query_analysis.clarifying_question
-            else:
-                # Query specific enough, execute search with ReAct agent
-                response_prediction = self.event_search_agent(
-                    question=user_message,
-                    previous_conversation=previous_conversation,
-                    page_context=page_context
-                )
-                # Refine the agent's response for brand voice
-                agent_refined = self.agent_response(
-                    user_input=user_message,
-                    agent_answer=response_prediction.answer,
-                    agent_reasoning=response_prediction.reasoning,
-                    page_context=page_context
-                )
-                response_message = agent_refined.message
+        except Exception as e:
+            # ReAct agent failure - provide helpful fallback
+            print(f"[ReAct Agent] Error during execution: {e}")
+            response_message = "I apologize, but I'm having trouble processing your request right now. Please try rephrasing your question or contact our support team at support@showeasy.com for immediate assistance."
 
-        else:
-            # Non-search intents (membership, tickets, general, etc.)
-            response_prediction = self.generate_response(
-                user_message=user_message,
-                previous_conversation=previous_conversation,
-                page_context=page_context,
-                user_intent=intent,
-            )
-            response_message = response_prediction.response_message
-
-        # ===== STEP 4: Post-Guardrails (Output Validation) =====
+        # ===== STEP 3: Post-Guardrails (Output Validation) =====
         try:
             output_validation = self.post_guardrails(
                 agent_response=response_message,
                 user_query=user_message,
-                response_intent=str(intent)
+                response_intent="conversation"  # Generic intent since ReAct handles all types
             )
 
             if not output_validation["is_safe"]:
@@ -129,9 +124,9 @@ class ConversationOrchestrator(dspy.Module):
                 print(f"[PostGuardrail] Improvement: {output_validation['improvement']}")
 
             # Return sanitized response (original if safe, sanitized if violations found)
-            return output_validation["response"]
+            return dspy.Prediction(answer=output_validation["response"])
 
         except Exception as e:
             # Post-guardrail failure - return original response as fallback
             print(f"[PostGuardrail] Error during validation: {e}")
-            return response_message
+            return dspy.Prediction(answer=response_message)

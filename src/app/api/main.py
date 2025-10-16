@@ -60,16 +60,16 @@ def chat(request: UserInputRequest):
         orchestrator = ConversationOrchestrator()
 
         # Get response from orchestrator
-        response_content = orchestrator(user_message=request.user_input,
-                                        previous_conversation=previous_conversation,
-                                        page_context=page_context)
+        prediction = orchestrator(user_message=request.user_input,
+                                  previous_conversation=previous_conversation,
+                                  page_context=page_context)
 
         langfuse.update_current_trace(
             user_id=request.user_id,
             session_id=request.session_id,
         )
 
-        return response_content
+        return prediction.answer
 
     response_content = wrapper_function()
 

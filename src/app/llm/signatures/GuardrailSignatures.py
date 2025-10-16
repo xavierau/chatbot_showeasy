@@ -103,3 +103,46 @@ class OutputGuardrailSignature(dspy.Signature):
     improvement_suggestion: str = dspy.OutputField(
         desc="If there was a violation, provide internal guidance on what was wrong (not shown to user). If is_safe is True, return empty string."
     )
+
+
+class ResponseRewriteSignature(dspy.Signature):
+    """Rewrites agent responses that violate guardrails while preserving intent and helpful information.
+
+    **Rewrite Goals:**
+    - Remove policy violations while keeping helpful content
+    - Replace competitor mentions with generic terms (except in URLs)
+    - Remove system leakage while maintaining user value
+    - Adjust pricing/discount language to align with official policy
+    - Maintain brand voice and professional tone
+    - Preserve URLs and links that are legitimate
+
+    **Constraints:**
+    - Do NOT remove event URLs or booking links
+    - Do NOT change factual event information
+    - Do NOT alter membership benefit descriptions if accurate
+    - Keep the response helpful and actionable
+    """
+
+    original_response: str = dspy.InputField(
+        desc="The original agent response that violated guardrails."
+    )
+
+    violation_type: str = dspy.InputField(
+        desc="The type of violation detected: 'competitor_mention', 'system_leakage', 'price_violation', etc."
+    )
+
+    user_query: str = dspy.InputField(
+        desc="The original user query for context."
+    )
+
+    response_intent: str = dspy.InputField(
+        desc="The intent being addressed (e.g., 'SEARCH_EVENT', 'MEMBERSHIP_INQUIRY')."
+    )
+
+    rewritten_response: str = dspy.OutputField(
+        desc="The rewritten response with violations removed but preserving helpful information, URLs, and user value."
+    )
+
+    changes_made: str = dspy.OutputField(
+        desc="Internal summary of what was changed during the rewrite (for logging/debugging)."
+    )

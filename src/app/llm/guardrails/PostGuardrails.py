@@ -2,7 +2,7 @@ import dspy
 import os
 import re
 from typing import Dict
-from ..signatures.GuardrailSignatures import OutputGuardrailSignature
+from ..signatures.GuardrailSignatures import OutputGuardrailSignature, ResponseRewriteSignature
 
 
 class OutputGuardrailViolation(Exception):
@@ -29,6 +29,7 @@ class PostGuardrails(dspy.Module):
     def __init__(self):
         super().__init__()
         self.validator = dspy.Predict(OutputGuardrailSignature)
+        self.rewriter = dspy.Predict(ResponseRewriteSignature)
 
         # Load configuration
         self.auto_sanitize = os.getenv("GUARDRAIL_AUTO_SANITIZE", "true").lower() == "true"
@@ -71,13 +72,27 @@ class PostGuardrails(dspy.Module):
         has_violation = False
         response_lower = response.lower()
 
-        # Check for competitor mentions
+        # Check for competitor mentions (but exclude URLs)
         for competitor in self.competitors:
             if competitor in response_lower:
-                has_violation = True
-                # Remove competitor mentions (case-insensitive)
-                pattern = re.compile(re.escape(competitor), re.IGNORECASE)
-                sanitized = pattern.sub("[external platform]", sanitized)
+                # Check if all occurrences are within URLs
+                url_pattern = re.compile(
+                    rf'https?://[^\s]*{re.escape(competitor)}[^\s]*',
+                    re.IGNORECASE
+                )
+                text_pattern = re.compile(
+                    rf'\b{re.escape(competitor)}\b',
+                    re.IGNORECASE
+                )
+
+                urls = url_pattern.findall(response)
+                all_mentions = text_pattern.findall(response)
+
+                # Only flag if competitor mentioned outside URLs
+                if len(all_mentions) > len(urls):
+                    has_violation = True
+                    # Remove only non-URL mentions
+                    sanitized = text_pattern.sub("[external platform]", sanitized)
 
         # Check for system leakage patterns
         for pattern in self.leakage_patterns:
@@ -148,11 +163,23 @@ class PostGuardrails(dspy.Module):
                     improvement=validation.improvement_suggestion
                 )
 
+            # Use LLM to intelligently rewrite the response
+            rewrite_result = self.rewriter(
+                original_response=agent_response,
+                violation_type=validation.violation_type,
+                user_query=user_query,
+                response_intent=response_intent
+            )
+
+            if self.log_violations:
+                print(f"[PostGuardrail] Rewrite changes: {rewrite_result.changes_made}")
+
             return {
                 "is_safe": False,
-                "response": validation.sanitized_response,
+                "response": rewrite_result.rewritten_response,
                 "violation_type": validation.violation_type,
-                "improvement": validation.improvement_suggestion
+                "improvement": validation.improvement_suggestion,
+                "rewrite_changes": rewrite_result.changes_made
             }
 
         # Output passed all guardrails

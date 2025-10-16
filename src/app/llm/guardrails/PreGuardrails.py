@@ -3,6 +3,8 @@ import os
 from typing import Optional, Dict
 from ..signatures.GuardrailSignatures import InputGuardrailSignature
 from ...models import ConversationMessage
+from pathlib import Path
+
 
 
 class GuardrailViolation(Exception):
@@ -33,10 +35,11 @@ class PreGuardrails(dspy.Module):
 
     def __init__(self):
         super().__init__()
-        self.validator = dspy.Predict(InputGuardrailSignature)
+        self.validator = dspy.ChainOfThought(InputGuardrailSignature)
 
         # Load configuration
         self.strict_mode = os.getenv("GUARDRAIL_STRICT_MODE", "true").lower() == "true"
+        self.strict_mode = False
 
         # Blocked keywords for quick pattern matching (Layer 1 defense)
         self.injection_patterns = [
@@ -155,3 +158,18 @@ class PreGuardrails(dspy.Module):
             "violation_type": "",
             "message": ""
         }
+
+    def load_optimized_model(self):
+        """Load a local optimized model for the guardrail validator."""
+
+        # Try to load optimized model if it exists
+        current_dir = Path(__file__).parent
+        json_file_path = current_dir.parent.parent / 'optimized' / 'InputGuardrails' / 'current.json'
+
+        if self.validator and json_file_path.exists():
+            try:
+                self.validator.load(str(json_file_path))
+            except (KeyError, FileNotFoundError, Exception):
+                # If loading fails, continue with unoptimized model
+                pass
+
