@@ -5,6 +5,7 @@ from .QueryGenerationSignature import QueryGenerationSignature
 from .SearchQueryAnalysisSignature import SearchQueryAnalysisSignature
 from .AgentResponseSignature import AgentResponseSignature
 from .GuardrailSignatures import InputGuardrailSignature, OutputGuardrailSignature
+from .ConversationSignature import ConversationSignature
 
 __all__ = [
     "UserMessageIntentSignature",
@@ -15,4 +16,5 @@ __all__ = [
     "AgentResponseSignature",
     "InputGuardrailSignature",
     "OutputGuardrailSignature",
+    "ConversationSignature",
 ]
