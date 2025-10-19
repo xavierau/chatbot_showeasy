@@ -1,0 +1,294 @@
+user_input,conversation_history,page_context,expected_tools_called,expected_response,language,complexity,intent_category
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+我想找這個週末在台北的親子活動,[],homepage,"Thinking, SearchEvent","好的，為您找到本週末在台北的幾個熱門親子活動：
+1. 【信義區】小小職業體驗營：讓孩子們體驗當消防員和醫生的樂趣！
+2. 【大安森林公園】週末親子野餐音樂會：享受陽光、草地和美好的音樂。
+3. 【台北市立天文館】星空探險隊：一起探索宇宙的奧秘。
+您可以點擊活動名稱查看更多詳情和購票資訊。請問有您感興趣的嗎？",zh_TW,medium,search_event
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+are there any cool workshops happening downtown next month?,[],homepage,"Thinking,SearchEvent","I found a few workshops happening downtown next month! Here are the top results:
+
+1.  **Introduction to Pottery:** Learn the basics of wheel throwing. (Various dates)
+2.  **Digital Photography Masterclass:** Capture stunning cityscapes. (Weekends)
+3.  **Sourdough Bread Making 101:** From starter to loaf. (Sat, Nov 9)
+
+You can click on any of these for more details or let me know if you'd like me to refine the search with specific dates or topics!",en,medium,search_event
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+你好,[],homepage,none,您好！請問今天有什麼可以為您服務的嗎？,zh_TW,simple,greeting
+how do i contact you guys?,[],,GeneralHelp,"You can reach our customer support team in a few ways! You can call us at 1-800-555-1234 during business hours (9 AM - 6 PM, Mon-Fri), email us at support@eventplatform.com, or fill out the contact form on our website. We're here to help!",en,simple,general
+hi there,[],homepage,none,"Hello! How can I help you today? You can ask me about events, tickets, or our membership program.",en,simple,greeting
+I wanted to buy tickets for the Modern Art Gala but it says sold out. Is there any other way to get them? like a waitlist or something?,[],event_detail_page,"Thinking, TicketInfo","I understand it can be disappointing when an event is sold out. Tickets for the Modern Art Gala are indeed currently sold out due to high demand.
+
+Sometimes, a limited number of tickets become available closer to the event date through our official Fan-to-Fan Resale Marketplace. I recommend checking there periodically.
+
+For future events, our Premium Members often get exclusive presale access, which is a great way to secure tickets for popular shows. You can learn more about membership benefits on our website.",en,medium,tickets
+are there any cool workshops happening downtown next month?,[],homepage,"Thinking,SearchEvent","I found a few workshops happening downtown next month! Here are the top results:
+
+1.  **Introduction to Pottery:** Learn the basics of wheel throwing. (Various dates)
+2.  **Digital Photography Masterclass:** Capture stunning cityscapes. (Weekends)
+3.  **Sourdough Bread Making 101:** From starter to loaf. (Sat, Nov 9)
+
+You can click on any of these for more details or let me know if you'd like me to refine the search with specific dates or topics!",en,medium,search_event
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+加入會員有什麼優惠嗎,[],membership_page,MembershipInfo,"您好！成為我們的會員，您可以享受多項專屬福利喔！主要包括：
+1. **購票優惠**：大部分活動都享有會員專屬折扣。
+2. **優先購票**：熱門活動開放前，會員可享優先預訂權。
+3. **免手續費**：會員購票免收系統服務費。
+4. **專屬活動**：不定期舉辦會員限定的特別活動。
+
+想了解更多或立即加入嗎？我可以為您提供會員頁面的連結！",zh_TW,simple,membership
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+what's the real difference between the fan and superfan memberships? is superfan worth the extra cost?,[],membership_page,"Thinking, MembershipInfo","That's a great question! Both memberships offer fantastic value, but the Superfan tier is designed for the ultimate event experience.
+
+Here's the main difference:
+
+The **Fan Membership** is perfect for getting started, offering you early access to ticket sales and a 10% discount on most events.
+
+The **Superfan Membership** includes all the Fan benefits, PLUS exclusive perks like:
+- **Priority Entry:** Skip the general admission lines.
+- **Exclusive Content:** Access to behind-the-scenes videos and interviews.
+- **Bigger Discounts:** A 15% discount on all events and merchandise.
+- **Special Invites:** Invitations to member-only Q&A sessions with artists.
+
+So, if you plan on attending several events a year and value perks like skipping lines and getting exclusive content, the Superfan membership is definitely worth considering for the enhanced experience and extra savings!",en,medium,membership
+are there any cool workshops happening downtown next month?,[],homepage,"Thinking,SearchEvent","I found a few workshops happening downtown next month! Here are the top results:
+
+1.  **Introduction to Pottery:** Learn the basics of wheel throwing. (Various dates)
+2.  **Digital Photography Masterclass:** Capture stunning cityscapes. (Weekends)
+3.  **Sourdough Bread Making 101:** From starter to loaf. (Sat, Nov 9)
+
+You can click on any of these for more details or let me know if you'd like me to refine the search with specific dates or topics!",en,medium,search_event
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+I wanted to buy tickets for the Modern Art Gala but it says sold out. Is there any other way to get them? like a waitlist or something?,[],event_detail_page,"Thinking, TicketInfo","I understand it can be disappointing when an event is sold out. Tickets for the Modern Art Gala are indeed currently sold out due to high demand.
+
+Sometimes, a limited number of tickets become available closer to the event date through our official Fan-to-Fan Resale Marketplace. I recommend checking there periodically.
+
+For future events, our Premium Members often get exclusive presale access, which is a great way to secure tickets for popular shows. You can learn more about membership benefits on our website.",en,medium,tickets
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+I want rock concerts in LA this weekend and how much is membership?,[],,"Thinking, SearchEvent, MembershipInfo","I'll help you with both! Let me search for rock concerts in Los Angeles this weekend and provide membership pricing information.
+
+[Search results for rock concerts]
+
+Regarding membership, we offer two plans:
+- Basic: $9.99/month - Priority access, early bird discounts
+- Premium: $19.99/month - All Basic benefits plus free ticket insurance, VIP upgrades, and exclusive pre-sales
+
+With Premium membership, you can save on ticket fees and get exclusive access to events like these rock concerts!",en,complex,multi_intent
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+hi,[],,none,"Hello! Welcome to ShowEasy! I'm here to help you discover amazing events, manage your tickets, or answer any questions about our platform. What can I help you with today?",en,simple,greeting
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+加入會員有什麼優惠嗎,[],membership_page,MembershipInfo,"您好！成為我們的會員，您可以享受多項專屬福利喔！主要包括：
+1. **購票優惠**：大部分活動都享有會員專屬折扣。
+2. **優先購票**：熱門活動開放前，會員可享優先預訂權。
+3. **免手續費**：會員購票免收系統服務費。
+4. **專屬活動**：不定期舉辦會員限定的特別活動。
+
+想了解更多或立即加入嗎？我可以為您提供會員頁面的連結！",zh_TW,simple,membership
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+what's the real difference between the fan and superfan memberships? is superfan worth the extra cost?,[],membership_page,"Thinking, MembershipInfo","That's a great question! Both memberships offer fantastic value, but the Superfan tier is designed for the ultimate event experience.
+
+Here's the main difference:
+
+The **Fan Membership** is perfect for getting started, offering you early access to ticket sales and a 10% discount on most events.
+
+The **Superfan Membership** includes all the Fan benefits, PLUS exclusive perks like:
+- **Priority Entry:** Skip the general admission lines.
+- **Exclusive Content:** Access to behind-the-scenes videos and interviews.
+- **Bigger Discounts:** A 15% discount on all events and merchandise.
+- **Special Invites:** Invitations to member-only Q&A sessions with artists.
+
+So, if you plan on attending several events a year and value perks like skipping lines and getting exclusive content, the Superfan membership is definitely worth considering for the enhanced experience and extra savings!",en,medium,membership
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+怎麼買票？,[],homepage,TicketInfo,您好！購票流程很簡單喔。請先找到您感興趣的活動，進入活動頁面後點擊「立即購票」，接著選擇您想要的票種和數量，然後按照指示完成結帳即可。提醒您，我們的會員購票可能享有專屬優惠，歡迎參考看看！如果您在過程中遇到任何問題，隨時都可以再問我。,zh_TW,simple,tickets
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+are there any cool workshops happening downtown next month?,[],homepage,"Thinking,SearchEvent","I found a few workshops happening downtown next month! Here are the top results:
+
+1.  **Introduction to Pottery:** Learn the basics of wheel throwing. (Various dates)
+2.  **Digital Photography Masterclass:** Capture stunning cityscapes. (Weekends)
+3.  **Sourdough Bread Making 101:** From starter to loaf. (Sat, Nov 9)
+
+You can click on any of these for more details or let me know if you'd like me to refine the search with specific dates or topics!",en,medium,search_event
+我想找這個週末在台北的親子活動,[],homepage,"Thinking, SearchEvent","好的，為您找到本週末在台北的幾個熱門親子活動：
+1. 【信義區】小小職業體驗營：讓孩子們體驗當消防員和醫生的樂趣！
+2. 【大安森林公園】週末親子野餐音樂會：享受陽光、草地和美好的音樂。
+3. 【台北市立天文館】星空探險隊：一起探索宇宙的奧秘。
+您可以點擊活動名稱查看更多詳情和購票資訊。請問有您感興趣的嗎？",zh_TW,medium,search_event
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+加入會員有什麼優惠嗎,[],membership_page,MembershipInfo,"您好！成為我們的會員，您可以享受多項專屬福利喔！主要包括：
+1. **購票優惠**：大部分活動都享有會員專屬折扣。
+2. **優先購票**：熱門活動開放前，會員可享優先預訂權。
+3. **免手續費**：會員購票免收系統服務費。
+4. **專屬活動**：不定期舉辦會員限定的特別活動。
+
+想了解更多或立即加入嗎？我可以為您提供會員頁面的連結！",zh_TW,simple,membership
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+help,[],homepage,AskClarification,"I'm here to help! What can I assist you with today? For example, you can ask me about finding an event, your tickets, or membership benefits.",en,simple,vague
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+請問要怎麼聯絡你們的客服？,[],homepage,none,您好！若您需要協助，可以透過電子郵件 service@example.com 聯繫我們的客服團隊。我們的服務時間為週一至週五，上午 9:00 至下午 6:00。我們收到您的訊息後會盡快回覆！,zh_TW,simple,general
+加入會員有什麼優惠嗎,[],membership_page,MembershipInfo,"您好！成為我們的會員，您可以享受多項專屬福利喔！主要包括：
+1. **購票優惠**：大部分活動都享有會員專屬折扣。
+2. **優先購票**：熱門活動開放前，會員可享優先預訂權。
+3. **免手續費**：會員購票免收系統服務費。
+4. **專屬活動**：不定期舉辦會員限定的特別活動。
+
+想了解更多或立即加入嗎？我可以為您提供會員頁面的連結！",zh_TW,simple,membership
+你好,[],homepage,none,您好！請問今天有什麼可以為您服務的嗎？,zh_TW,simple,greeting
+how do i contact you guys?,[],,GeneralHelp,"You can reach our customer support team in a few ways! You can call us at 1-800-555-1234 during business hours (9 AM - 6 PM, Mon-Fri), email us at support@eventplatform.com, or fill out the contact form on our website. We're here to help!",en,simple,general
+Can I get a refund if I can't attend?,[],checkout_page,TicketInfo,Yes! Our refund policy allows cancellations up to 24 hours before the event for a full refund. Premium members get extended cancellation windows (up to 2 hours before) and free ticket insurance. Would you like to know more about Premium membership benefits?,en,medium,tickets
+怎麼買票？,[],homepage,TicketInfo,您好！購票流程很簡單喔。請先找到您感興趣的活動，進入活動頁面後點擊「立即購票」，接著選擇您想要的票種和數量，然後按照指示完成結帳即可。提醒您，我們的會員購票可能享有專屬優惠，歡迎參考看看！如果您在過程中遇到任何問題，隨時都可以再問我。,zh_TW,simple,tickets
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+怎麼買票？,[],homepage,TicketInfo,您好！購票流程很簡單喔。請先找到您感興趣的活動，進入活動頁面後點擊「立即購票」，接著選擇您想要的票種和數量，然後按照指示完成結帳即可。提醒您，我們的會員購票可能享有專屬優惠，歡迎參考看看！如果您在過程中遇到任何問題，隨時都可以再問我。,zh_TW,simple,tickets
+請問要怎麼聯絡你們的客服？,[],homepage,none,您好！若您需要協助，可以透過電子郵件 service@example.com 聯繫我們的客服團隊。我們的服務時間為週一至週五，上午 9:00 至下午 6:00。我們收到您的訊息後會盡快回覆！,zh_TW,simple,general
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+請問要怎麼聯絡你們的客服？,[],homepage,none,您好！若您需要協助，可以透過電子郵件 service@example.com 聯繫我們的客服團隊。我們的服務時間為週一至週五，上午 9:00 至下午 6:00。我們收到您的訊息後會盡快回覆！,zh_TW,simple,general
+events,[],,AskClarification,"I'd love to help you find events! To give you the best recommendations, could you tell me:
+- What type of events are you interested in? (concerts, sports, theater, etc.)
+- Do you have a specific location in mind?
+- Any preferred dates or time frame?",en,simple,vague
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+how much are the tickets for this?,[],event_detail_page,"Thinking, TicketInfo","Tickets for this event start at $45 for general admission. As a reminder, members often receive exclusive discounts on tickets. Let me know if you'd like to purchase or have any other questions!",en,simple,tickets
+how do i contact you guys?,[],,GeneralHelp,"You can reach our customer support team in a few ways! You can call us at 1-800-555-1234 during business hours (9 AM - 6 PM, Mon-Fri), email us at support@eventplatform.com, or fill out the contact form on our website. We're here to help!",en,simple,general
+I wanted to buy tickets for the Modern Art Gala but it says sold out. Is there any other way to get them? like a waitlist or something?,[],event_detail_page,"Thinking, TicketInfo","I understand it can be disappointing when an event is sold out. Tickets for the Modern Art Gala are indeed currently sold out due to high demand.
+
+Sometimes, a limited number of tickets become available closer to the event date through our official Fan-to-Fan Resale Marketplace. I recommend checking there periodically.
+
+For future events, our Premium Members often get exclusive presale access, which is a great way to secure tickets for popular shows. You can learn more about membership benefits on our website.",en,medium,tickets
+問題,[],,AskClarification,您好！請問有什麼可以為您服務的嗎？您可以問我關於活動搜尋、會員權益或票務問題喔。,zh_TW,simple,vague
+how do i contact you guys?,[],,GeneralHelp,"You can reach our customer support team in a few ways! You can call us at 1-800-555-1234 during business hours (9 AM - 6 PM, Mon-Fri), email us at support@eventplatform.com, or fill out the contact form on our website. We're here to help!",en,simple,general
+what's the real difference between the fan and superfan memberships? is superfan worth the extra cost?,[],membership_page,"Thinking, MembershipInfo","That's a great question! Both memberships offer fantastic value, but the Superfan tier is designed for the ultimate event experience.
+
+Here's the main difference:
+
+The **Fan Membership** is perfect for getting started, offering you early access to ticket sales and a 10% discount on most events.
+
+The **Superfan Membership** includes all the Fan benefits, PLUS exclusive perks like:
+- **Priority Entry:** Skip the general admission lines.
+- **Exclusive Content:** Access to behind-the-scenes videos and interviews.
+- **Bigger Discounts:** A 15% discount on all events and merchandise.
+- **Special Invites:** Invitations to member-only Q&A sessions with artists.
+
+So, if you plan on attending several events a year and value perks like skipping lines and getting exclusive content, the Superfan membership is definitely worth considering for the enhanced experience and extra savings!",en,medium,membership
+問題,[],,AskClarification,您好！請問有什麼可以為您服務的嗎？您可以問我關於活動搜尋、會員權益或票務問題喔。,zh_TW,simple,vague
+how do i contact you guys?,[],,GeneralHelp,"You can reach our customer support team in a few ways! You can call us at 1-800-555-1234 during business hours (9 AM - 6 PM, Mon-Fri), email us at support@eventplatform.com, or fill out the contact form on our website. We're here to help!",en,simple,general
+請問要怎麼聯絡你們的客服？,[],homepage,none,您好！若您需要協助，可以透過電子郵件 service@example.com 聯繫我們的客服團隊。我們的服務時間為週一至週五，上午 9:00 至下午 6:00。我們收到您的訊息後會盡快回覆！,zh_TW,simple,general
+hi there,[],homepage,none,"Hello! How can I help you today? You can ask me about events, tickets, or our membership program.",en,simple,greeting
+加入會員有什麼優惠嗎,[],membership_page,MembershipInfo,"您好！成為我們的會員，您可以享受多項專屬福利喔！主要包括：
+1. **購票優惠**：大部分活動都享有會員專屬折扣。
+2. **優先購票**：熱門活動開放前，會員可享優先預訂權。
+3. **免手續費**：會員購票免收系統服務費。
+4. **專屬活動**：不定期舉辦會員限定的特別活動。
+
+想了解更多或立即加入嗎？我可以為您提供會員頁面的連結！",zh_TW,simple,membership
+How much does a mebership cost?,[],homepage,"Thinking,MembershipInfo","Our standard membership is $99 per year. As a member, you'll enjoy fantastic benefits like early access to tickets and exclusive discounts on many events!",en,simple,membership
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+怎麼買票？,[],homepage,TicketInfo,您好！購票流程很簡單喔。請先找到您感興趣的活動，進入活動頁面後點擊「立即購票」，接著選擇您想要的票種和數量，然後按照指示完成結帳即可。提醒您，我們的會員購票可能享有專屬優惠，歡迎參考看看！如果您在過程中遇到任何問題，隨時都可以再問我。,zh_TW,simple,tickets
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+show me concerts,[],homepage,"Thinking,SearchEvent","Of course! I'm looking up all available concerts for you now. Here are the results I found. Don't forget, our members often receive exclusive pre-sale access and discounts on tickets!",en,simple,search_event
+我想找這個週末在台北的親子活動,[],homepage,"Thinking, SearchEvent","好的，為您找到本週末在台北的幾個熱門親子活動：
+1. 【信義區】小小職業體驗營：讓孩子們體驗當消防員和醫生的樂趣！
+2. 【大安森林公園】週末親子野餐音樂會：享受陽光、草地和美好的音樂。
+3. 【台北市立天文館】星空探險隊：一起探索宇宙的奧秘。
+您可以點擊活動名稱查看更多詳情和購票資訊。請問有您感興趣的嗎？",zh_TW,medium,search_event
+help,[],homepage,AskClarification,"I'm here to help! What can I assist you with today? For example, you can ask me about finding an event, your tickets, or membership benefits.",en,simple,vague
+我想找下個月在台北的爵士音樂會，順便問一下，如果我辦會員的話，買票會不會比較便宜？,[],homepage,"Thinking,SearchEvent,MembershipInfo","好的，為您查詢到下個月在台北有以下幾場爵士音樂會：
+*   **都會爵士夜** - 11/15 於 台北國家音樂廳
+*   **藍調星期三：即興之夜** - 每週三於 Blue Note Taipei
+*   **週末搖擺：復古爵士派對** - 11/25 於 The Wall Live House
+
+關於會員優惠，答案是肯定的！我們的會員享有專屬購票優惠，大部分活動可享 9 折優惠，並且還有機會優先購票，確保您不會錯過熱門活動。現在加入會員，購買上述音樂會門票即可立即享受折扣！",zh_TW,complex,multi_intent
+help,[],homepage,AskClarification,"I'm here to help! What can I assist you with today? For example, you can ask me about finding an event, your tickets, or membership benefits.",en,simple,vague
+hi there,[],homepage,none,"Hello! How can I help you today? You can ask me about events, tickets, or our membership program.",en,simple,greeting
+我想找演唱會,[],homepage,"Thinking,SearchEvent",好的，為您找到以下幾場熱門演唱會：[演唱會 A]、[演唱會 B]、[演唱會 C]。請問您對哪一場有興趣呢？提醒您，會員購票可能享有獨家優惠或優先購票權喔！,zh_TW,simple,search_event
+請問要怎麼聯絡你們的客服？,[],homepage,none,您好！若您需要協助，可以透過電子郵件 service@example.com 聯繫我們的客服團隊。我們的服務時間為週一至週五，上午 9:00 至下午 6:00。我們收到您的訊息後會盡快回覆！,zh_TW,simple,general
+"I'm looking for a play to see on the evening of November 16th. What do you have? Also, what's your policy on ticket exchanges if something comes up and I can't make it?",[],homepage,"Thinking, SearchEvent, GeneralHelp","On the evening of Saturday, November 16th, we have the critically acclaimed drama ""The Last Voyage"" showing at 7:30 PM. 
+
+Regarding our exchange policy, you can exchange your tickets for another date of the same event or for a credit of equal value up to 48 hours before the performance. Please note that exchanges are subject to availability. Our members enjoy even more flexibility, with the ability to exchange tickets up to 24 hours before the showtime.
+
+Would you like to look at available seats for ""The Last Voyage""?",en,complex,multi_intent
+are there any cool workshops happening downtown next month?,[],homepage,"Thinking,SearchEvent","I found a few workshops happening downtown next month! Here are the top results:
+
+1.  **Introduction to Pottery:** Learn the basics of wheel throwing. (Various dates)
+2.  **Digital Photography Masterclass:** Capture stunning cityscapes. (Weekends)
+3.  **Sourdough Bread Making 101:** From starter to loaf. (Sat, Nov 9)
+
+You can click on any of these for more details or let me know if you'd like me to refine the search with specific dates or topics!",en,medium,search_event
+找音樂會,[],,"Thinking, SearchEvent",我來幫您搜尋音樂會！[搜尋結果]。想要了解會員優惠嗎？會員可享有優先購票和折扣！,zh_TW,simple,search_event
+怎麼買票？,[],homepage,TicketInfo,您好！購票流程很簡單喔。請先找到您感興趣的活動，進入活動頁面後點擊「立即購票」，接著選擇您想要的票種和數量，然後按照指示完成結帳即可。提醒您，我們的會員購票可能享有專屬優惠，歡迎參考看看！如果您在過程中遇到任何問題，隨時都可以再問我。,zh_TW,simple,tickets

@@ -2,7 +2,23 @@
 
 ## Overview
 
-ShowEasy.ai covers a comprehensive range of event types to serve diverse user interests and preferences.
+ShowEasy.ai covers a comprehensive range of event types to serve diverse user interests and preferences, with a special emphasis on supporting **Hong Kong original performance IPs** and local creators.
+
+## Hong Kong Original Content Priority
+
+### Show Easy Group Productions
+The platform features original performances developed through Show Easy Group's DDC Creative Content division:
+- Original musicals and theatrical productions
+- Hong Kong-created performance IPs
+- Performance-themed venue shows
+- Events supporting behind-the-scenes creators (writers, producers, designers, lighting technicians)
+
+### Supporting Local Creators
+Events are curated to showcase:
+- Hong Kong performers and artists
+- Original Hong Kong cultural content
+- Behind-the-scenes talent (writers, directors, producers, designers)
+- Emerging Hong Kong creators across all performance disciplines
 
 ## Primary Categories
 
@@ -100,7 +116,38 @@ Root Categories
     └── Art & Exhibitions
 ```
 
+## Special Category: Performance-Themed Venues
+
+### Meta Stages 十八夢
+
+**Meta Stages 十八夢** is Show Easy Group's flagship performance-themed restaurant, combining exceptional dining with live original performances.
+
+**Venue Concept:**
+- Center around original performance IPs developed by DDC Creative Content
+- Provide stages for Hong Kong creators to showcase work
+- Offer unique dining and entertainment experiences where creativity and art collide
+- Support both performers and behind-the-scenes talent
+
+**Member Benefits:**
+- **Silver Members**: 20% off regular-priced items all day (全日8折) + complimentary lunch vouchers
+- **Gold Members**: 25% off regular-priced items all day (全日75折) + lunch vouchers + HK$300 cash voucher (renewals) + complimentary special dessert platter (HK$338 value)
+
+**Special Features:**
+- Instagram-worthy dessert platters for social media sharing
+- Intimate dining with live performances
+- Support local Hong Kong creative talent with every visit
+- Exclusive member-only events and performances
+
+Events at Meta Stages 十八夢 and other performance-themed venues receive special prominence on the platform.
+
 ## Category-Specific Features
+
+### Hong Kong Original Content
+- Directly supports local creators and performers
+- Often features behind-the-scenes talent
+- May include creator Q&A or backstage access
+- Strong connection to Show Easy Group's mission
+- Members support the local creative ecosystem
 
 ### Entertainment Events
 - Often have VIP/backstage access for members

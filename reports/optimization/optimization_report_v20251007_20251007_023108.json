@@ -1,0 +1,61 @@
+{
+  "version": "v20251007",
+  "timestamp": "20251007_023108",
+  "duration": "0:01:49.060959",
+  "config": {
+    "dataset_path": "pre_guardrails_dataset.csv",
+    "teacher_model": "gemini/gemini-2.5-pro",
+    "student_model": "gemini/gemini-2.5-flash-lite",
+    "train_size": 40,
+    "val_size": 10,
+    "max_bootstrapped_demos": 4,
+    "max_labeled_demos": 8
+  },
+  "results": {
+    "baseline": {
+      "true_positives": 4,
+      "true_negatives": 3,
+      "false_positives": 1,
+      "false_negatives": 2,
+      "accuracy": 0.7,
+      "precision": 0.8,
+      "recall": 0.6666666666666666,
+      "f1": 0.7272727272727272,
+      "total_errors": 3
+    },
+    "optimized": {
+      "true_positives": 4,
+      "true_negatives": 4,
+      "false_positives": 0,
+      "false_negatives": 2,
+      "accuracy": 0.8,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "f1": 0.8,
+      "total_errors": 2
+    },
+    "error_reduction_pct": 33.33333333333333,
+    "multi_metric": {
+      "Accuracy (Balanced)": {
+        "baseline": 0.7,
+        "optimized": 0.8,
+        "improvement": 0.1
+      },
+      "Security-Focused": {
+        "baseline": 0.77,
+        "optimized": 0.8,
+        "improvement": 0.03
+      },
+      "F1-Balanced": {
+        "baseline": 0.7,
+        "optimized": 0.8,
+        "improvement": 0.1
+      }
+    }
+  },
+  "files": {
+    "versioned_model": "/Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/v20251007_20251007_023108.json",
+    "current_model": "/Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/current.json",
+    "metadata": "/Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/current_metadata.json"
+  }
+}

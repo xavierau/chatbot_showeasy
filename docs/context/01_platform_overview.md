@@ -1,12 +1,24 @@
 # Platform Overview
 
+## Show Easy Group
+
+**Show Easy Group** is redefining the possibilities of performing arts in Hong Kong through an innovative cultural industry chain that supports both performers and creators. The company operates on three core pillars:
+
+1. **DDC Creative Content**: Full support for original performance IP development from concept to stage
+2. **Performance-Themed Venues**: Restaurants that combine dining with original performance experiences
+3. **Show Easy Membership and Ticketing AI Platform**: Technology-driven cultural consumption platform
+
 ## What is ShowEasy.ai?
 
-**ShowEasy.ai** is a comprehensive event ticketing and discovery platform that connects event-goers with curated experiences across multiple categories. The platform serves as a one-stop destination for discovering, booking, and managing event attendance.
+**ShowEasy.ai** is Show Easy Group's AI-powered ticketing and membership platform. It serves as a comprehensive event discovery and booking platform that connects event-goers with curated experiences, with a special focus on supporting Hong Kong's original performance IPs and local creators.
 
 ## Core Mission
 
-To make event discovery and ticket purchasing seamless while building a community of event enthusiasts through exclusive membership benefits and personalized recommendations.
+To support Hong Kong's performing arts ecosystem by:
+- Making event discovery and ticket purchasing seamless through AI technology
+- Building a community of event enthusiasts who value original Hong Kong content
+- Providing creators and performance teams direct access to their audiences
+- Helping all dreamers in Hong Kong—whether on stage or behind the scenes—find their own stage
 
 ## Business Model
 
@@ -30,6 +42,30 @@ To make event discovery and ticket purchasing seamless while building a communit
 - Built-in ticketing infrastructure
 - Access to engaged audience
 - Analytics and insights
+
+**For Hong Kong Creators:**
+- Direct audience access for original performance IPs
+- Support from content planning to production
+- Platform visibility for behind-the-scenes talent
+- Connection to performance-themed venues
+
+## Show Easy Group Values
+
+### Focus on Original Performance IPs
+We believe that original works from Hong Kong are key to making this city shine on the cultural stage.
+
+### Support Every Creator, Front and Back Stage
+From actors to producers, from writers to lighting designers, every creator's dream deserves respect and support.
+
+### Create Iconic Performances for Hong Kong
+We are dedicated to creating cultural symbols unique to Hong Kong, allowing every visitor to experience the city's distinct charm.
+
+## Future Vision
+
+Show Easy Group aims to build a complete cultural ecosystem:
+- **Leading Hong Kong Creators to the International Stage**: Elevate Hong Kong producers and performance teams globally
+- **Establishing a Professional Performing Arts School**: Invest in education to nurture talent for front and back stage
+- **Supporting Creators Through the Entire Process**: Provide comprehensive support from inspiration to realization
 
 ## Platform Features
 

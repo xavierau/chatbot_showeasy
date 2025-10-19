@@ -1,0 +1,123 @@
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: PREGUARDRAILS OPTIMIZATION
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Version: v20251007
+[2025-10-07 02:29:19] INFO: Dataset: pre_guardrails_dataset.csv
+[2025-10-07 02:29:19] INFO: Started at: 2025-10-07 02:29:19.676437
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: LOADING DATASET
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Loaded 50 examples from pre_guardrails_dataset.csv
+[2025-10-07 02:29:19] INFO: Columns: ['user_input', 'conversation_history', 'is_valid', 'reason']
+[2025-10-07 02:29:19] INFO: Valid inputs: 19
+[2025-10-07 02:29:19] INFO: Invalid inputs: 31
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: CREATING DSPY EXAMPLES
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Created 50 DSPy Examples
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: DEFINING METRICS
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Defined 3 evaluation metrics:
+[2025-10-07 02:29:19] INFO:   - guardrail_accuracy_metric (balanced)
+[2025-10-07 02:29:19] INFO:   - security_focused_metric (prioritizes catching attacks)
+[2025-10-07 02:29:19] INFO:   - balanced_f1_metric (F1 score)
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: SPLITTING DATASET
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Training set: 40 examples
+[2025-10-07 02:29:19] INFO: Validation set: 10 examples
+[2025-10-07 02:29:19] INFO: Training - Valid: 15, Invalid: 25
+[2025-10-07 02:29:19] INFO: Validation - Valid: 4, Invalid: 6
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: CONFIGURING MODELS
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Teacher Model: gemini/gemini-2.5-pro
+[2025-10-07 02:29:19] INFO: Student Model: gemini/gemini-2.5-flash-lite
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: CREATING GUARDRAIL MODULE
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: PreGuardrails module initialized
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: BASELINE BENCHMARK
+[2025-10-07 02:29:19] INFO: ======================================================================
+[2025-10-07 02:29:19] INFO: Evaluating unoptimized model...
+[2025-10-07 02:29:29] INFO: Baseline Accuracy: 70.00%
+[2025-10-07 02:29:38] INFO: 
+BASELINE Performance Breakdown:
+[2025-10-07 02:29:38] INFO: Total examples: 10
+[2025-10-07 02:29:38] INFO: Correct Classifications:
+[2025-10-07 02:29:38] INFO:   True Positives (caught invalid):  4
+[2025-10-07 02:29:38] INFO:   True Negatives (passed valid):    3
+[2025-10-07 02:29:38] INFO: Errors:
+[2025-10-07 02:29:38] INFO:   False Positives (blocked valid):  1
+[2025-10-07 02:29:38] INFO:   False Negatives (missed invalid): 2
+[2025-10-07 02:29:38] INFO: Metrics:
+[2025-10-07 02:29:38] INFO:   Accuracy:  70.00%
+[2025-10-07 02:29:38] INFO:   Precision: 80.00%
+[2025-10-07 02:29:38] INFO:   Recall:    66.67%
+[2025-10-07 02:29:38] INFO:   F1 Score:  72.73%
+[2025-10-07 02:29:38] INFO: ======================================================================
+[2025-10-07 02:29:38] INFO: BOOTSTRAPFEWSHOT OPTIMIZATION
+[2025-10-07 02:29:38] INFO: ======================================================================
+[2025-10-07 02:29:38] INFO: Initializing optimizer...
+[2025-10-07 02:29:38] INFO: Configuration:
+[2025-10-07 02:29:38] INFO:   - Metric: security_focused_metric
+[2025-10-07 02:29:38] INFO:   - Max bootstrapped demos: 4
+[2025-10-07 02:29:38] INFO:   - Max labeled demos: 8
+[2025-10-07 02:29:38] INFO:   - Teacher LM: gemini/gemini-2.5-pro
+[2025-10-07 02:29:38] INFO: Starting compilation (this may take several minutes)...
+[2025-10-07 02:29:58] INFO: Optimization complete!
+[2025-10-07 02:29:58] INFO: ======================================================================
+[2025-10-07 02:29:58] INFO: POST-OPTIMIZATION BENCHMARK
+[2025-10-07 02:29:58] INFO: ======================================================================
+[2025-10-07 02:29:58] INFO: Evaluating optimized model...
+[2025-10-07 02:30:07] INFO: Optimized Accuracy: 80.00%
+[2025-10-07 02:30:15] INFO: 
+OPTIMIZED Performance Breakdown:
+[2025-10-07 02:30:15] INFO: Total examples: 10
+[2025-10-07 02:30:15] INFO: Correct Classifications:
+[2025-10-07 02:30:15] INFO:   True Positives (caught invalid):  4
+[2025-10-07 02:30:15] INFO:   True Negatives (passed valid):    4
+[2025-10-07 02:30:15] INFO: Errors:
+[2025-10-07 02:30:15] INFO:   False Positives (blocked valid):  0
+[2025-10-07 02:30:15] INFO:   False Negatives (missed invalid): 2
+[2025-10-07 02:30:15] INFO: Metrics:
+[2025-10-07 02:30:15] INFO:   Accuracy:  80.00%
+[2025-10-07 02:30:15] INFO:   Precision: 100.00%
+[2025-10-07 02:30:15] INFO:   Recall:    66.67%
+[2025-10-07 02:30:15] INFO:   F1 Score:  80.00%
+[2025-10-07 02:30:15] INFO: ======================================================================
+[2025-10-07 02:30:15] INFO: FINAL COMPARISON
+[2025-10-07 02:30:15] INFO: ======================================================================
+[2025-10-07 02:30:15] INFO: Baseline:  70.00%
+[2025-10-07 02:30:15] INFO: Optimized: 80.00%
+[2025-10-07 02:30:15] INFO: Improvement: +10.00% (+14.3%)
+[2025-10-07 02:30:15] INFO: Error Reduction: 1 (33.3%)
+[2025-10-07 02:30:15] INFO: ======================================================================
+[2025-10-07 02:30:15] INFO: MULTI-METRIC EVALUATION
+[2025-10-07 02:30:15] INFO: ======================================================================
+[2025-10-07 02:30:31] INFO: Accuracy (Balanced):
+[2025-10-07 02:30:31] INFO:   Baseline:    70.00%
+[2025-10-07 02:30:31] INFO:   Optimized:   80.00%
+[2025-10-07 02:30:31] INFO:   Improvement: +10.00%
+[2025-10-07 02:30:50] INFO: Security-Focused:
+[2025-10-07 02:30:50] INFO:   Baseline:    77.00%
+[2025-10-07 02:30:50] INFO:   Optimized:   80.00%
+[2025-10-07 02:30:50] INFO:   Improvement: +3.00%
+[2025-10-07 02:31:08] INFO: F1-Balanced:
+[2025-10-07 02:31:08] INFO:   Baseline:    70.00%
+[2025-10-07 02:31:08] INFO:   Optimized:   80.00%
+[2025-10-07 02:31:08] INFO:   Improvement: +10.00%
+[2025-10-07 02:31:08] INFO: ======================================================================
+[2025-10-07 02:31:08] INFO: SAVING OPTIMIZED MODEL
+[2025-10-07 02:31:08] INFO: ======================================================================
+[2025-10-07 02:31:08] INFO: Versioned model saved: /Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/v20251007_20251007_023108.json
+[2025-10-07 02:31:08] INFO: Previous model backed up: /Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/current_backup_20251007_023108.json
+[2025-10-07 02:31:08] INFO: Current model updated: /Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/current.json
+[2025-10-07 02:31:08] INFO: Metadata saved: /Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/PreGuardrails/current_metadata.json
+[2025-10-07 02:31:08] INFO: ======================================================================
+[2025-10-07 02:31:08] INFO: GENERATING REPORT
+[2025-10-07 02:31:08] INFO: ======================================================================
+[2025-10-07 02:31:08] INFO: JSON report saved: /Users/xavierau/Code/python/showeasy_chatbot/reports/optimization/optimization_report_v20251007_20251007_023108.json
+[2025-10-07 02:31:08] INFO: Markdown report saved: /Users/xavierau/Code/python/showeasy_chatbot/reports/optimization/optimization_report_v20251007_20251007_023108.md

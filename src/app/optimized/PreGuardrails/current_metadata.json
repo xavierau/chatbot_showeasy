@@ -1,0 +1,13 @@
+{
+  "version": "v20251007",
+  "timestamp": "20251007_023108",
+  "versioned_file": "v20251007_20251007_023108.json",
+  "dataset": "pre_guardrails_dataset.csv",
+  "teacher_model": "gemini/gemini-2.5-pro",
+  "student_model": "gemini/gemini-2.5-flash-lite",
+  "baseline_accuracy": 0.7,
+  "optimized_accuracy": 0.8,
+  "improvement": 0.1,
+  "baseline_recall": 0.6666666666666666,
+  "optimized_recall": 0.6666666666666666
+}
