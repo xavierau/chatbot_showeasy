@@ -60,10 +60,9 @@ def _get_general_help(category: str = "navigation") -> Dict[str, str]:
         Premium members get enhanced features like early access and exclusive events!""",
 
         "contact": """Contact Customer Support:
-        - Live Chat: Available 24/7 for premium members
-        - Email: support@showeasy.com (response within 24 hours)
-        - Phone: 1-800-SHOWEASY (Monday-Friday, 9am-6pm)
-        - Help Center: https://eventplatform.test/help
+        - Phone: (852) 5538 3561 (answered within 24 hours)
+        - Email: info@showeasy.ai (reply within 10 working days)
+        - Office: 6/F, V Point, 18 Tang Lung Street, Causeway Bay, Hong Kong
 
         For account-specific issues, make sure you're logged in when contacting support."""
     }
