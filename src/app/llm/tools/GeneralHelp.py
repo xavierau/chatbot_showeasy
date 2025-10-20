@@ -8,6 +8,7 @@ This tool handles:
 - Platform policies
 """
 import dspy
+import os
 from typing import Dict
 
 
@@ -21,6 +22,7 @@ def _get_general_help(category: str = "navigation") -> Dict[str, str]:
     Returns:
         Dictionary with help information
     """
+    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://showeasy.ai")
 
     help_info = {
         "navigation": """Platform Navigation:
@@ -41,13 +43,13 @@ def _get_general_help(category: str = "navigation") -> Dict[str, str]:
 
         Access your account by clicking your profile icon in the top right.""",
 
-        "policies": """Platform Policies:
+        "policies": f"""Platform Policies:
         - Privacy Policy: We protect your personal information
         - Terms of Service: Rules and guidelines for platform use
         - Cookie Policy: How we use cookies to enhance your experience
         - Accessibility: We're committed to making events accessible to everyone
 
-        Full policy documents available at https://eventplatform.test/policies""",
+        Full policy documents available at {event_platform_base_url}/policies""",
 
         "features": """Platform Features:
         - Smart Search: AI-powered event recommendations

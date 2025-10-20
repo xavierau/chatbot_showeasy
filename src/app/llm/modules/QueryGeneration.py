@@ -38,7 +38,7 @@ This is the main table for events.
 | :--- | :--- | :--- |
 | `id` | `bigint` | **Primary Key** for the event. |
 | `name` | `json` | The name of the event (e.g., `{"en": "Tech Conference"}`). |
-| `slug` | `json` | URL-friendly slug for the event (e.g., `{"en": "tech-conference"}`). Used to construct event detail page URLs: `https://eventplatform.test/events/{slug}`. |
+| `slug` | `json` | URL-friendly slug for the event (e.g., `{"en": "tech-conference"}`). Used to construct event detail page URLs: `{EVENT_PLATFORM_BASE_URL}/events/{slug}` (base URL from environment). |
 | `description`| `json` | A detailed description of the event. |
 | `category_id`| `bigint` | **Foreign Key** linking to the `categories` table. |
 | `event_status`| `varchar` | The status of the event (e.g., 'published', 'draft'). |

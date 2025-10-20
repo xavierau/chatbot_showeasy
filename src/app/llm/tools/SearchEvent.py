@@ -131,7 +131,7 @@ def _search_logic(
     last_error = None
     previous_query = None
 
-    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://eventplatform.test")
+    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://showeasy.ai")
 
     # Validate database configuration
     try:

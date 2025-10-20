@@ -69,3 +69,6 @@ Thumbs.db
 *.log
 memory_storage/
 cache/
+
+# Weights & Biases
+wandb/

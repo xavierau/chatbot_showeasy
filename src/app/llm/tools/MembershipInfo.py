@@ -8,6 +8,7 @@ This tool handles all membership-related queries including:
 - Discounts and savings
 """
 import dspy
+import os
 from typing import Dict
 
 
@@ -21,6 +22,8 @@ def _get_membership_info(query_type: str = "general") -> Dict[str, str]:
     Returns:
         Dictionary with membership information
     """
+    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://showeasy.ai")
+
     # This would typically query a database or CMS
     # For now, returning structured information
 
@@ -45,8 +48,8 @@ def _get_membership_info(query_type: str = "general") -> Dict[str, str]:
 
         The membership pays for itself after purchasing just 3-4 tickets!""",
 
-        "upgrade": """Upgrade to Premium Membership today!
-        Visit your account settings or go to https://eventplatform.test/membership to upgrade.
+        "upgrade": f"""Upgrade to Premium Membership today!
+        Visit your account settings or go to {event_platform_base_url}/membership to upgrade.
         Current members can upgrade to Premium Plus at any time and receive prorated credits.
         New members get their first month at 50% off!"""
     }

@@ -33,7 +33,8 @@ class EventSearchSignature(dspy.Signature):
     - For sold-out risks: "Members get early access before tickets sell out!"
 
     **Response Format:**
-    - Always include event URLs: [Event Name](https://eventplatform.test/events/{slug}?utm_source=chatbot)
+    - Always include event URLs: [Event Name]({base_url}/events/{slug}?utm_source=chatbot)
+      where {base_url} is the platform base URL from EVENT_PLATFORM_BASE_URL environment variable
     - Include key details: date, location, brief description
     - Be enthusiastic but professional
     - End with a helpful call-to-action
@@ -44,8 +45,8 @@ class EventSearchSignature(dspy.Signature):
     Good Response:
     "I found 3 amazing concerts for you! 🎵
 
-    1. [Jazz Under the Stars](https://eventplatform.test/events/jazz-under-stars?utm_source=chatbot) - Saturday 8PM at City Park. Featuring Grammy-winning artists!
-    2. [Rock Legends Live](https://eventplatform.test/events/rock-legends?utm_source=chatbot) - Sunday 7PM at Arena Hall.
+    1. [Jazz Under the Stars]({base_url}/events/jazz-under-stars?utm_source=chatbot) - Saturday 8PM at City Park. Featuring Grammy-winning artists!
+    2. [Rock Legends Live]({base_url}/events/rock-legends?utm_source=chatbot) - Sunday 7PM at Arena Hall.
 
     💎 Member tip: Save 20% on all these tickets with our membership! Would you like to know more about membership benefits?"
 
