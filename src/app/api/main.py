@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 import os
 import dspy
+from typing import Optional
 from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest
+from ..models import ABTestConfig, ModuleABConfig, ABVariant
 from ..llm.modules.ConversationOrchestrator import ConversationOrchestrator
 from ..memory_manager import MemoryManager, FileMemoryService
 from ..middleware.logging_middleware import LoggingMiddleware
@@ -29,6 +31,81 @@ file_memory_service = FileMemoryService()
 memory_manager = MemoryManager(memory_service=file_memory_service)
 
 
+def get_ab_test_config(user_id: str, session_id: str) -> Optional[ABTestConfig]:
+    """Determine AB test configuration based on user_id for consistent variant assignment.
+
+    Uses hash-based bucketing to ensure:
+    - Same user always gets same variant (consistency)
+    - Even distribution across variants
+    - Reproducible results
+
+    Args:
+        user_id: User identifier for consistent bucketing
+        session_id: Session identifier (for logging)
+
+    Returns:
+        ABTestConfig or None for control group
+
+    Example configurations:
+        # 50/50 split: control vs optimized pre-guardrails
+        # 33/33/33 split: control vs variant_a vs variant_b for agent testing
+
+    Environment Variables:
+        AB_TEST_ENABLED: Set to "true" to enable AB testing (default: false)
+        AB_TEST_MODULE: Which module to test (pre_guardrails, post_guardrails, agent)
+        AB_TEST_VARIANT_A_RATIO: Percentage for variant A (default: 33)
+        AB_TEST_VARIANT_B_RATIO: Percentage for variant B (default: 33)
+    """
+    # Check if AB testing is enabled
+    if os.getenv("AB_TEST_ENABLED", "false").lower() != "true":
+        return None
+
+    # Determine which module to test
+    module_to_test = os.getenv("AB_TEST_MODULE", "pre_guardrails")
+    variant_a_ratio = int(os.getenv("AB_TEST_VARIANT_A_RATIO", "33"))
+    variant_b_ratio = int(os.getenv("AB_TEST_VARIANT_B_RATIO", "33"))
+
+    # Hash user_id for consistent bucketing (0-99)
+    import hashlib
+    hash_val = int(hashlib.md5(user_id.encode()).hexdigest(), 16) % 100
+
+    # Determine variant based on hash
+    if hash_val < variant_a_ratio:
+        variant = ABVariant.VARIANT_A
+    elif hash_val < variant_a_ratio + variant_b_ratio:
+        variant = ABVariant.VARIANT_B
+    else:
+        variant = ABVariant.CONTROL
+
+    # Create config based on module being tested
+    if module_to_test == "pre_guardrails":
+        return ABTestConfig(
+            pre_guardrails=ModuleABConfig(
+                enabled=True,
+                variant=variant,
+                description=f"Pre-guardrails {variant.value} testing"
+            )
+        )
+    elif module_to_test == "post_guardrails":
+        return ABTestConfig(
+            post_guardrails=ModuleABConfig(
+                enabled=True,
+                variant=variant,
+                description=f"Post-guardrails {variant.value} testing"
+            )
+        )
+    elif module_to_test == "agent":
+        return ABTestConfig(
+            agent=ModuleABConfig(
+                enabled=True,
+                variant=variant,
+                description=f"Agent {variant.value} testing"
+            )
+        )
+
+    return None
+
+
 @app.get("/")
 def read_root():
     return {"message": "Hello World"}
@@ -53,25 +130,81 @@ def chat(request: UserInputRequest):
         page_context = get_page_content(request.current_url)
         log.debug("Page context retrieved", context_length=len(page_context))
 
+    # Determine AB test configuration for this user
+    ab_config = get_ab_test_config(request.user_id, request.session_id)
+    if ab_config:
+        log.info("AB test active", ab_config=ab_config)
+
 
 
     @observe()
-    def wrapper_function():
-        orchestrator = ConversationOrchestrator()
+    def wrapper_function(ab_config: Optional[ABTestConfig] = None):
+        """Wrapper function with AB testing support.
+
+        Args:
+            ab_config: Optional AB testing configuration for nested modules.
+                      If None, uses default configuration (all control).
+
+        Example AB test configurations:
+            # Test optimized vs baseline pre-guardrails
+            ab_config = ABTestConfig(
+                pre_guardrails=ModuleABConfig(
+                    enabled=True,
+                    variant=ABVariant.VARIANT_A,
+                    description="Baseline pre-guardrails without optimization"
+                )
+            )
+
+            # Test different agent max_iters
+            ab_config = ABTestConfig(
+                agent=ModuleABConfig(
+                    enabled=True,
+                    variant=ABVariant.VARIANT_A,
+                    description="Agent with max_iters=5 for faster responses"
+                )
+            )
+        """
+        orchestrator = ConversationOrchestrator(ab_config=ab_config)
 
         # Get response from orchestrator
         prediction = orchestrator(user_message=request.user_input,
                                   previous_conversation=previous_conversation,
                                   page_context=page_context)
 
-        langfuse.update_current_trace(
-            user_id=request.user_id,
-            session_id=request.session_id,
-        )
+        # Log AB test metadata to Langfuse
+        if ab_config and ab_config.is_any_variant_active():
+            langfuse.update_current_trace(
+                user_id=request.user_id,
+                session_id=request.session_id,
+                metadata={
+                    "ab_test": {
+                        "pre_guardrails": {
+                            "enabled": ab_config.pre_guardrails.enabled,
+                            "variant": ab_config.pre_guardrails.variant.value,
+                            "description": ab_config.pre_guardrails.description
+                        },
+                        "post_guardrails": {
+                            "enabled": ab_config.post_guardrails.enabled,
+                            "variant": ab_config.post_guardrails.variant.value,
+                            "description": ab_config.post_guardrails.description
+                        },
+                        "agent": {
+                            "enabled": ab_config.agent.enabled,
+                            "variant": ab_config.agent.variant.value,
+                            "description": ab_config.agent.description
+                        }
+                    }
+                }
+            )
+        else:
+            langfuse.update_current_trace(
+                user_id=request.user_id,
+                session_id=request.session_id,
+            )
 
         return prediction.answer
 
-    response_content = wrapper_function()
+    response_content = wrapper_function(ab_config=ab_config)
 
     log.debug("Orchestrator response generated", response_length=len(response_content))
 

@@ -1,5 +1,5 @@
 import dspy
-from typing import Optional
+from typing import Optional,Literal
 
 
 class InputGuardrailSignature(dspy.Signature):
@@ -46,7 +46,7 @@ class InputGuardrailSignature(dspy.Signature):
         desc="True if the input is within scope, safe, and not malicious. False otherwise."
     )
 
-    violation_type: str = dspy.OutputField(
+    violation_type: Literal['out_of_scope', 'prompt_injection', 'safety_violation', 'pii_detected', 'malicious_intent'] = dspy.OutputField(
         desc="If is_valid is False, specify the violation type: 'out_of_scope', 'prompt_injection', 'safety_violation', 'pii_detected', or 'malicious_intent'. If is_valid is True, return empty string."
     )
 

@@ -1,7 +1,8 @@
 import dspy
 from langfuse import observe
+from typing import Optional
 from ..signatures import ConversationSignature
-from ...models import ConversationMessage
+from ...models import ConversationMessage, ABTestConfig, ABVariant
 from ..tools import (
     SearchEvent,
     MembershipInfo,
@@ -35,25 +36,96 @@ class ConversationOrchestrator(dspy.Module):
     - SOLID: Clean separation between tools, agent logic, and validation
     """
 
-    def __init__(self):
+    def __init__(self, ab_config: Optional[ABTestConfig] = None):
         super().__init__()
 
-        # Guardrails (unchanged)
-        self.pre_guardrails = PreGuardrails()
-        self.post_guardrails = PostGuardrails()
+        # Initialize AB test configuration
+        self.ab_config = ab_config or ABTestConfig.default()
 
-        # Comprehensive ReAct Agent with all tools
-        # ReAct naturally handles intent determination through reasoning
-        self.agent = dspy.ReAct(
+        # Initialize guardrails with AB testing support
+        self.pre_guardrails = self._initialize_pre_guardrails()
+        self.post_guardrails = self._initialize_post_guardrails()
+
+        # Initialize agent with AB testing support
+        self.agent = self._initialize_agent()
+
+    def _initialize_pre_guardrails(self) -> PreGuardrails:
+        """Initialize PreGuardrails based on AB test configuration.
+
+        Variants:
+        - CONTROL: Standard PreGuardrails with load_optimized_model()
+        - VARIANT_A: PreGuardrails without loading optimized model (baseline)
+        - VARIANT_B: Reserved for future variants (e.g., different optimization)
+        """
+        pre_guardrails = PreGuardrails()
+
+        if self.ab_config.pre_guardrails.enabled:
+            variant = self.ab_config.pre_guardrails.variant
+
+            if variant == ABVariant.CONTROL:
+                # Default behavior: load optimized model
+                pass  # Already loaded in __init__
+            elif variant == ABVariant.VARIANT_A:
+                # Variant A: Don't load optimized model (baseline comparison)
+                # Reset to unoptimized by recreating the validator
+                from ..signatures.GuardrailSignatures import InputGuardrailSignature
+                pre_guardrails.validator = dspy.ChainOfThought(InputGuardrailSignature)
+                print(f"[AB Test] PreGuardrails using VARIANT_A: {self.ab_config.pre_guardrails.description}")
+            elif variant == ABVariant.VARIANT_B:
+                # Variant B: Reserved for future experiments
+                print(f"[AB Test] PreGuardrails using VARIANT_B: {self.ab_config.pre_guardrails.description}")
+
+        return pre_guardrails
+
+    def _initialize_post_guardrails(self) -> PostGuardrails:
+        """Initialize PostGuardrails based on AB test configuration.
+
+        Variants:
+        - CONTROL: Standard PostGuardrails
+        - VARIANT_A: Reserved for variant testing
+        - VARIANT_B: Reserved for variant testing
+        """
+        post_guardrails = PostGuardrails()
+
+        if self.ab_config.post_guardrails.enabled:
+            variant = self.ab_config.post_guardrails.variant
+            print(f"[AB Test] PostGuardrails using {variant.value}: {self.ab_config.post_guardrails.description}")
+
+        return post_guardrails
+
+    def _initialize_agent(self) -> dspy.ReAct:
+        """Initialize ReAct agent based on AB test configuration.
+
+        Variants:
+        - CONTROL: Standard ReAct with max_iters=10
+        - VARIANT_A: Reserved for variant testing (e.g., different max_iters)
+        - VARIANT_B: Reserved for variant testing
+        """
+        # Default configuration
+        max_iters = 10
+        tools = [
+            Thinking,  # Working memory - should be first for reasoning before actions
+            SearchEvent,
+            MembershipInfo,
+            TicketInfo,
+            GeneralHelp,
+        ]
+
+        if self.ab_config.agent.enabled:
+            variant = self.ab_config.agent.variant
+
+            if variant == ABVariant.VARIANT_A:
+                # Example: Different max_iters for variant testing
+                max_iters = 5
+                print(f"[AB Test] Agent using VARIANT_A (max_iters={max_iters}): {self.ab_config.agent.description}")
+            elif variant == ABVariant.VARIANT_B:
+                # Example: Different tool configuration
+                print(f"[AB Test] Agent using VARIANT_B: {self.ab_config.agent.description}")
+
+        return dspy.ReAct(
             ConversationSignature,
-            tools=[
-                Thinking,  # Working memory - should be first for reasoning before actions
-                SearchEvent,
-                MembershipInfo,
-                TicketInfo,
-                GeneralHelp,
-            ],
-            max_iters=10  # Allow multiple tool calls for complex queries
+            tools=tools,
+            max_iters=max_iters
         )
 
     def forward(self, user_message: str, previous_conversation: list[ConversationMessage], page_context: str = "") -> dspy.Prediction:

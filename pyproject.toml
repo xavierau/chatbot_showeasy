@@ -19,6 +19,9 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "readability-lxml>=0.8.4.1",
     "scikit-learn>=1.7.2",
+    "seaborn>=0.13.2",
     "structlog>=24.4.0",
     "uvicorn[standard]>=0.37.0",
+    "wandb>=0.22.2",
+    "weave>=0.52.10",
 ]

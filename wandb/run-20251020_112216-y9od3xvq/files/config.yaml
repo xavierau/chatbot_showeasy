@@ -1,0 +1,59 @@
+_wandb:
+    value:
+        cli_version: 0.22.2
+        e:
+            zy038kutg9iev906slg691fpaclv9nvy:
+                apple:
+                    ecpuCores: 2
+                    gpuCores: 14
+                    memoryGb: 16
+                    name: Apple M1 Pro
+                    pcpuCores: 6
+                    ramTotalBytes: "17179869184"
+                    swapTotalBytes: "12884901888"
+                codePath: GEPA_for_preguardrail.ipynb
+                codePathLocal: GEPA_for_preguardrail.ipynb
+                cpu_count: 8
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "494384795648"
+                        used: "470220320768"
+                email: xavier.au@anacreation.com
+                executable: /Users/xavierau/Code/python/showeasy_chatbot/.venv/bin/python
+                git:
+                    commit: 8778d92942a9189fad2acaf282250ff2f7da36b0
+                    remote: git@github.com:xavierau/chatbot_showeasy.git
+                host: TJ3VFW49GN.local
+                memory:
+                    total: "17179869184"
+                os: macOS-15.6.1-arm64-arm-64bit-Mach-O
+                program: GEPA_for_preguardrail.ipynb
+                python: CPython 3.13.2
+                root: /Users/xavierau/Code/python/showeasy_chatbot
+                startedAt: "2025-10-20T03:22:16.189705Z"
+                writerId: zy038kutg9iev906slg691fpaclv9nvy
+        m: []
+        python_version: 3.13.2
+        t:
+            "1":
+                - 5
+                - 53
+                - 95
+                - 105
+                - 107
+            "2":
+                - 5
+                - 53
+                - 95
+                - 105
+                - 107
+            "3":
+                - 2
+                - 61
+            "4": 3.13.2
+            "5": 0.22.2
+            "8":
+                - 1
+            "12": 0.22.2
+            "13": darwin-arm64

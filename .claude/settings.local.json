@@ -1,29 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chmod:*)",
-      "Bash(git filter-branch:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git reflog:*)",
-      "Bash(git gc:*)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(git remote set-url:*)",
-      "Bash(uv sync:*)",
-      "Bash(lsof:*)",
-      "Bash(xargs kill:*)",
-      "WebFetch(domain:langfuse.com)",
-      "Bash(python:*)",
-      "WebSearch",
-      "WebFetch(domain:github.com)",
-      "Bash(uv pip:*)",
-      "WebFetch(domain:arize-ai.github.io)",
-      "Bash(curl:*)",
-      "Bash(PYTHONPATH=/Users/xavierau/Code/python/showeasy_chatbot/src python -c \"from app.llm.guardrails import PreGuardrails, PostGuardrails; from app.llm.signatures import InputGuardrailSignature, OutputGuardrailSignature; from app.models import Intent; print(''✓ All imports successful'')\")",
-      "Bash(timeout:*)",
-      "WebFetch(domain:showeasy.ai)",
-      "WebFetch(domain:dspy.ai)"
+      "Bash(cat /Users/xavierau/Code/python/showeasy_chatbot/src/app/optimized/InputGuardrails/current.json)",
+      "Bash(git check-ignore -v *.ipynb notebooks/*.ipynb)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-10-20T13:31:31.433212",
+  "configuration": {
+    "student_model": "gpt-4.1-nano",
+    "teacher_model": "gpt-4.1-mini",
+    "optimizer": "GEPA",
+    "auto_budget": "light",
+    "num_threads": 16
+  },
+  "dataset": {
+    "train_size": 77,
+    "val_size": 26,
+    "test_size": 26,
+    "total_samples": 129
+  },
+  "results": {
+    "baseline": {
+      "accuracy": 0.9230769230769231,
+      "precision": 1.0,
+      "recall": 0.7777777777777778,
+      "f1": 0.875,
+      "fpr": 0.2222222222222222,
+      "latency_ms": 2119.9602530552793
+    },
+    "optimized": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "fpr": 0.0,
+      "latency_ms": 2347.7635291906504
+    },
+    "improvements": {
+      "accuracy": 0.07692307692307687,
+      "fpr_reduction": 0.2222222222222222
+    },
+    "statistical_test": {
+      "t_statistic": 1.4433756729740643,
+      "p_value": 0.161329376889563,
+      "significant": 
