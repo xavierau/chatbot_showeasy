@@ -6,6 +6,7 @@ class UserInputRequest(BaseModel):
     user_id: Optional[int]
     session_id: str
     current_url: Optional[str]
+    page_content: Optional[str]
 
 class GetMessagesRequest(BaseModel):
     session_id: str

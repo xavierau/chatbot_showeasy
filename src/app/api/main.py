@@ -125,17 +125,12 @@ def chat(request: UserInputRequest):
     previous_conversation = memory_manager.get_memory(request.session_id)
     log.debug("Retrieved conversation history", message_count=len(previous_conversation.messages))
 
-    page_context = ""
-    if request.current_url:
-        page_context = get_page_content(request.current_url)
-        log.debug("Page context retrieved", context_length=len(page_context))
-
     # Determine AB test configuration for this user
     ab_config = get_ab_test_config(request.user_id, request.session_id)
     if ab_config:
         log.info("AB test active", ab_config=ab_config)
 
-
+    page_context = request.page_content or ""
 
     @observe()
     def wrapper_function(ab_config: Optional[ABTestConfig] = None):
