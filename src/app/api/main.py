@@ -15,8 +15,6 @@ import re
 import structlog
 from langfuse import observe, get_client
 
-
-
 configure_llm()
 configure_logging()
 
@@ -130,10 +128,8 @@ def chat(request: UserInputRequest):
     if ab_config:
         log.info("AB test active", ab_config=ab_config)
 
-    page_context = request.page_content or ""
-
     @observe()
-    def wrapper_function(ab_config: Optional[ABTestConfig] = None):
+    def wrapper_function(message:str, content:str, ab_config: Optional[ABTestConfig] = None):
         """Wrapper function with AB testing support.
 
         Args:
@@ -162,9 +158,9 @@ def chat(request: UserInputRequest):
         orchestrator = ConversationOrchestrator(ab_config=ab_config)
 
         # Get response from orchestrator
-        prediction = orchestrator(user_message=request.user_input,
+        prediction = orchestrator(user_message=message,
                                   previous_conversation=previous_conversation,
-                                  page_context=page_context)
+                                  page_context=content)
 
         # Log AB test metadata to Langfuse
         if ab_config and ab_config.is_any_variant_active():
@@ -199,7 +195,10 @@ def chat(request: UserInputRequest):
 
         return prediction.answer
 
-    response_content = wrapper_function(ab_config=ab_config)
+    response_content = wrapper_function(
+         message=request.user_input,
+         content=request.page_content,
+         ab_config=ab_config)
 
     log.debug("Orchestrator response generated", response_length=len(response_content))
 
