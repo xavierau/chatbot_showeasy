@@ -3,6 +3,7 @@ from app.models import SearchEventInput
 from app.llm.signatures import QueryGenerationSignature
 from typing import Optional
 from langfuse import observe
+import datetime
 
 
 class QueryGeneration(dspy.Module):
@@ -11,76 +12,150 @@ class QueryGeneration(dspy.Module):
     def __init__(self):
         super().__init__()
         self.generator = dspy.ChainOfThought(QueryGenerationSignature)
-        self.mysql_db_schema = """### Simplified Database Schema for Event Search
+        self.mysql_db_schema = """-- Organizers: The people or companies hosting events
+CREATE TABLE `organizers` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` varchar,
+  `description` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `website_url` varchar,
+  `contact_email` varchar,
+  `contact_phone` varchar,
+  `social_media_links` json,
+  `address_line_1` varchar,
+  `city` varchar,
+  `country_id` bigint,
+  `state_id` bigint,
+  `is_active` tinyint
+);
 
-This schema focuses on the four main tables required to find events and their details.
+-- Events: The main happenings (concerts, shows, etc.)
+CREATE TABLE `events` (
+  `id` bigint,
+  `organizer_id` bigint,
+  `category_id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `description` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `short_summary` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `event_status` varchar,
+  `visibility` varchar,
+  `is_featured` tinyint,
+  `contact_email` varchar,
+  `contact_phone` varchar,
+  `website_url` varchar,
+  `social_media_links` json,
+  `youtube_video_id` varchar,
+  `published_at` timestamp
+);
 
-### Querying Guidelines
-- **Semantic Category Matching (CRITICAL):** When the user query mentions category-like terms (e.g., "musical concert", "art show"), you MUST check the Database Context for matching category names. Use the EXACT category name from the database context in your LIKE clause, not the user's literal input. For example, if user searches "musical concert" and the context shows "Music Concerts" exists, use `LIKE '%Music Concerts%'` NOT `LIKE '%musical concert%'`.
-- **Query Analysis:** If the user query includes "(matched category: X)" or "(category: X)", prioritize using X as the exact category name in your WHERE clause for categories.
-- **Use `LIKE` for Flexibility:** For all user-provided text filters (on names, descriptions, cities, or categories), you **MUST** use a case-insensitive `LIKE` comparison with wildcards (e.g., `LOWER(column) LIKE '%keyword%'`). Do NOT use exact matches (`=`).
-- **Smart Keyword Logic:** The user's main `query` (e.g., "interesting events") should be broken into keywords ("interesting", "events"). The generated SQL should find events where **any** of these keywords appear in `events.name`, `events.description`, or `categories.name`. All keyword checks must be combined with `OR`. Do not use `AND` to connect different keywords.
-- **Case-Insensitive Searches:** All `LIKE` comparisons MUST be case-insensitive. Achieve this by wrapping the column expression in the `LOWER()` function.
-- **JSON Columns:** The `name`, `description`, `city`, and `slug` columns are JSON. Use `JSON_UNQUOTE(JSON_EXTRACT(column, '$.en'))` to query the English text.
-- **Required SELECT Columns (CRITICAL):** ALL queries MUST include these columns in the SELECT clause:
-  1. `e.id AS id` - Event ID (REQUIRED, always first)
-  2. `JSON_UNQUOTE(JSON_EXTRACT(e.slug, '$.en')) AS slug` - URL slug (REQUIRED, always second)
-  3. `JSON_UNQUOTE(JSON_EXTRACT(e.name, '$.en')) AS event_name` - Event name
-  4. `JSON_UNQUOTE(JSON_EXTRACT(e.description, '$.en')) AS description` - Description
-  5. `JSON_UNQUOTE(JSON_EXTRACT(v.city, '$.en')) AS city` - City
-  6. `eo.start_at_utc AS start_time` - Start time
-  Without id and slug, event URLs cannot be constructed. These 6 columns are MANDATORY.
+-- Venues: The physical (or virtual) locations for events
+CREATE TABLE `venues` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `description` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` varchar,
+  `organizer_id` bigint,
+  `address_line_1` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `address_line_2` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `city` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `postal_code` varchar,
+  `state_id` bigint,
+  `country_id` bigint,
+  `latitude` decimal,
+  `longitude` decimal,
+  `website_url` varchar,
+  `seating_capacity` int,
+  `is_active` tinyint
+);
 
-#### 1. `events` table
-This is the main table for events.
+-- Event Occurrences: Specific dates/times for an event
+CREATE TABLE `event_occurrences` (
+  `id` bigint,
+  `event_id` bigint,
+  `venue_id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `description` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `start_at_utc` timestamp,
+  `end_at_utc` timestamp,
+  `timezone` varchar,
+  `is_online` tinyint,
+  `online_meeting_link` varchar,
+  `status` varchar,
+  `capacity` int
+);
 
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | **Primary Key** for the event. |
-| `name` | `json` | The name of the event (e.g., `{"en": "Tech Conference"}`). |
-| `slug` | `json` | URL-friendly slug for the event (e.g., `{"en": "tech-conference"}`). Used to construct event detail page URLs: `{EVENT_PLATFORM_BASE_URL}/events/{slug}` (base URL from environment). |
-| `description`| `json` | A detailed description of the event. |
-| `category_id`| `bigint` | **Foreign Key** linking to the `categories` table. |
-| `event_status`| `varchar` | The status of the event (e.g., 'published', 'draft'). |
-| `visibility` | `varchar` | The visibility of the event (e.g., 'public', 'private'). |
+-- Ticket Definitions: The types of tickets available for sale
+CREATE TABLE `ticket_definitions` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `description` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `price` int,
+  `currency` varchar,
+  `total_quantity` int,
+  `availability_window_start_utc` timestamp,
+  `availability_window_end_utc` timestamp,
+  `status` varchar
+);
 
----
+-- Pivot Table: Links specific occurrences to ticket types
+CREATE TABLE `event_occurrence_ticket_definition` (
+  `event_occurrence_id` bigint,
+  `ticket_definition_id` bigint,
+  `quantity_for_occurrence` int,
+  `price_override` int,
+  `availability_status` varchar
+);
 
-#### 2. `categories` table
-This table stores the categories for events.
+-- Categories: For filtering events (e.g., "Music", "Theater")
+CREATE TABLE `categories` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` varchar,
+  `parent_id` bigint,
+  `is_active` tinyint
+);
 
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | **Primary Key** for the category. |
-| `name` | `json` | The name of the category (e.g., `{"en": "Tech"}`). |
+-- Tags: For adding keywords to events (e.g., "Pop", "Outdoor")
+CREATE TABLE `tags` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` varchar
+);
 
-*__Relationship:__ `events.category_id` links to `categories.id`.*
+-- Pivot Table: Links events to tags
+CREATE TABLE `event_tag` (
+  `event_id` bigint,
+  `tag_id` bigint
+);
 
----
+-- Countries: Location data
+CREATE TABLE `countries` (
+  `id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `iso_code_2` varchar,
+  `is_active` tinyint
+);
 
-#### 3. `event_occurrences` table
-This table stores the specific dates and times for each event. An event can have multiple occurrences.
+-- States: Location data (provinces, regions, etc.)
+CREATE TABLE `states` (
+  `id` bigint,
+  `country_id` bigint,
+  `name` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `code` varchar,
+  `is_active` tinyint
+);
 
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | **Primary Key** for the occurrence. |
-| `event_id` | `bigint` | **Foreign Key** linking to the `events` table. |
-| `venue_id` | `bigint` | **Foreign Key** linking to the `venues` table. |
-| `start_at_utc`| `timestamp`| The start date and time of the occurrence in UTC. |
-
-*__Relationship:__ `event_occurrences.event_id` links to `events.id`.*
-
----
-
-#### 4. `venues` table
-This table stores the location details for event occurrences.
-
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | **Primary Key** for the venue. |
-| `city` | `json` | The city where the venue is located (e.g., `{"en": "San Francisco"}`). |
-
-*__Relationship:__ `event_occurrences.venue_id` links to `venues.id`.*"""
+-- CMS Pages: For static content like "About Us", "FAQ", etc.
+CREATE TABLE `cms_pages` (
+  `id` bigint,
+  `title` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `slug` varchar,
+  `content` json COMMENT 'Multilingual content {"en": "...", "zh-TW": "...", ...}',
+  `is_published` tinyint,
+  `published_at` timestamp
+);
+"""
 
     @observe()
     def forward(
@@ -100,8 +175,31 @@ This table stores the location details for event occurrences.
             criteria.append(f"Date or time frame: '{request.date}'")
         if request.category:
             criteria.append(f"Category: '{request.category}'")
+        # ** NEW **: Add checks for all the new 'optimal' fields
+        if request.tags:
+            tag_list = ", ".join([f"'{t}'" for t in request.tags])
+            criteria.append(f"Must have tags: [{tag_list}]")
+        if request.is_online is True:
+            criteria.append("Event must be online")
+        elif request.is_online is False:
+            criteria.append("Event must be in-person (not online)")
+        if request.max_price is not None:
+            if request.max_price == 0:
+                criteria.append("Event must be free")
+            else:
+                criteria.append(f"Maximum ticket price: {request.max_price}")
+        if request.organizer_name:
+            criteria.append(f"Hosted by organizer: '{request.organizer_name}'")
+        if request.venue_name:
+            criteria.append(f"At venue: '{request.venue_name}'")
+        # --- End of updates ---
 
-        user_request_str = "User is searching for events with the following criteria: " + ", ".join(criteria) + "."
+        utc_now_string = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
+
+        if not criteria:
+            user_request_str = f"Current UTC Datetime: {utc_now_string} \n User is asking for general event recommendations (no specific criteria given)."
+        else:
+            user_request_str = f"Current UTC Datetime: {utc_now_string} \n User is searching for events with the following criteria: " + ", ".join(criteria) + "."
 
         prediction = self.generator(
             user_request=user_request_str,

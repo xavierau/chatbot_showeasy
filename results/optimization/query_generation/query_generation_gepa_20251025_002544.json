@@ -1,0 +1,48 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Given a user's request and a database schema, generate a valid and efficient MySQL query.\n\nThe query should be designed to run on the provided database schema and answer the user's request.\n\nCRITICAL REQUIREMENTS - The query MUST select these columns with EXACT aliases:\n1. e.id AS id (REQUIRED for event identification)\n2. JSON_UNQUOTE(JSON_EXTRACT(e.slug, '$.en')) AS slug (REQUIRED for URL construction)\n3. JSON_UNQUOTE(JSON_EXTRACT(e.name, '$.en')) AS event_name\n4. JSON_UNQUOTE(JSON_EXTRACT(e.description, '$.en')) AS description\n5. JSON_UNQUOTE(JSON_EXTRACT(v.city, '$.en')) AS city\n6. eo.start_at_utc AS start_time\n\nIMPORTANT: The query MUST be ordered by the event's start date in ascending order (eo.start_at_utc ASC)\nand MUST be limited to a maximum of 10 results using a LIMIT clause.",
+      "fields": [
+        {
+          "prefix": "User Request:",
+          "description": "A structured string representing the user's search criteria."
+        },
+        {
+          "prefix": "Db Schema:",
+          "description": "The simplified MySQL database schema."
+        },
+        {
+          "prefix": "Database Context:",
+          "description": "(Optional) Current database context with available categories, locations, and statistics to help generate relevant queries."
+        },
+        {
+          "prefix": "Failed Query:",
+          "description": "(Optional) The previously generated SQL query that failed."
+        },
+        {
+          "prefix": "Database Error:",
+          "description": "(Optional) The error message returned from the database for the failed query."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Sql Query:",
+          "description": "A single, valid, and efficient MySQL query that answers the user's request based on the schema, including an ORDER BY and a LIMIT clause."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.13",
+      "dspy": "3.0.3",
+      "cloudpickle": "3.1"
+    }
+  }
+}
