@@ -8,7 +8,19 @@
       "Bash(python -c:*)",
       "Bash(mkdir:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(PYTHONPATH=src python:*)",
+      "Bash(PYTHONPATH=src pytest:*)",
+      "Bash(uv sync:*)",
+      "Bash(PYTHONPATH=src uv run pytest:*)",
+      "Bash(uv pip install:*)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(uv run python:*)",
+      "Bash(PYTHONPATH=src .venv/bin/python -m pytest:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []

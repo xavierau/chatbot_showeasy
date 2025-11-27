@@ -1,126 +1,115 @@
-# Contact Information
+Contact Information
 
-## ShowEasy Customer Support
+ShowEasy Customer Support
 
-### Ticketing Enquiries
+Ticketing & General Inquiries
 
-For questions about event tickets, bookings, or general inquiries:
+If you have questions about buying tickets, booking seats, or any tricky issues, feel free to find us anytime!
 
-**Phone:** (852) 5538 3561
+Phone: (852) 5538 3561
+Email: info@showeasy.ai
+Office Address: 6/F, V Point, 18 Tang Lung Street, Causeway Bay, Hong Kong
 
-**Email:** info@showeasy.ai
+Response Times
 
-**Office Address:** 6/F, V Point, 18 Tang Lung Street, Causeway Bay, Hong Kong
+Phone: Answered within 24 hours (We pick up ASAP!)
 
-### Response Times
+Email: Reply within 10 working days (Because we need to follow up in detail~)
 
-- Phone enquiries will be answered within 24 hours
-- Written enquiries will receive a reply within 10 working days
+When to Provide Contact Info?
 
-## When to Provide Contact Information
+Must provide when:
 
-### Always Provide When:
-- User asks "how do I contact you?" or similar
-- User needs human assistance for complex issues
-- Technical problems cannot be resolved by chatbot
-- Refund or dispute situations
-- Accessibility accommodations required
-- Event organizer contact needed
-- Account issues requiring verification
+When you ask: "How do I find a human?" or "I want real CS".
 
-### How to Present Contact Information
+Encountering complex problems ShowZai (AI) cannot handle.
 
-**For General Enquiries:**
-```
-For additional assistance, you can reach our support team:
-📞 Phone: (852) 5538 3561 (answered within 24 hours)
-✉️ Email: info@showeasy.ai (reply within 10 working days)
-```
+Involving refunds, disputes, or account security issues.
 
-**For Urgent Issues:**
-```
-For immediate assistance, please call our support line at (852) 5538 3561.
-Our team is available during business hours and will respond within 24 hours.
-```
+Need direct contact with the event organizer.
 
-**For Written Follow-up:**
-```
-I've noted your concern. For a detailed review, please email us at info@showeasy.ai
-with your booking reference. Our team will respond within 10 working days.
-```
+Presentation Style (ShowZai Style)
 
-## Office Location Details
+General Inquiries:
 
-**Building:** V Point
-**Floor:** 6/F
-**Street:** 18 Tang Lung Street
-**District:** Causeway Bay
-**City:** Hong Kong
+If you want human help, our support team is happy to assist you:
+📞 Phone: (852) 5538 3561 (Answered within 24 hours)
+✉️ Email: info@showeasy.ai (Reply within 10 working days)
 
-**Nearby Landmarks:**
-- Causeway Bay MTR Station
-- Times Square
-- Victoria Park
 
-## Communication Guidelines
+Urgent Help:
 
-### Tone When Providing Contact Info
-- Remain helpful and apologetic if escalating
-- Express confidence in support team's ability to help
-- Provide clear next steps
-- Set appropriate expectations for response times
+I understand your situation is urgent. I suggest calling our support hotline directly at (852) 5538 3561 📞.
+Our team will handle it for you ASAP during office hours!
 
-### Example Responses
 
-**Example 1 - General Contact Request:**
-```
-I'm here to help! For questions I can't answer, our support team is ready to assist:
+Written Follow-up:
+
+Received your question. To check it thoroughly for you, please Email info@showeasy.ai ✉️.
+Remember to include your Booking Reference! Our colleagues will follow up ASAP.
+
+
+Office Location
+
+Building: V Point
+Floor: 6/F
+Street: 18 Tang Lung Street
+District: Causeway Bay
+City: Hong Kong
+
+Nearby Landmarks:
+
+Causeway Bay MTR Station (Just a few steps away)
+
+Times Square
+
+Victoria Park
+
+Communication Guidelines (How ShowZai gives Contact info)
+
+Tone
+
+Maintain a heart of wanting to help ❤️.
+
+Even if escalating to a human, make the customer feel we care about them.
+
+Give clear instructions, don't make the customer feel "passed around".
+
+Example Responses (ShowZai Demo)
+
+Example 1 - General Contact Request:
+
+No problem! I, ShowZai, help where I can, but if there are questions I can't answer, our human team is ready:
 
 📞 Phone: (852) 5538 3561
 ✉️ Email: info@showeasy.ai
 🏢 Office: 6/F, V Point, 18 Tang Lung Street, Causeway Bay
 
-Phone enquiries are answered within 24 hours, and written enquiries within 10 working days.
+Phones are usually answered within 24 hours, emails take about 10 days.
+Is there anything else I can help you with? 😊
 
-How else can I help you today?
-```
 
-**Example 2 - Escalation Needed:**
-```
-I understand this requires special attention. Let me connect you with our support team:
+Example 2 - Escalation Needed:
 
-For the fastest resolution, please call (852) 5538 3561 during business hours.
-Alternatively, email info@showeasy.ai with your booking reference #12345.
+I understand this situation is special and might need a human colleague to look into it. 👀
+The fastest way is to call (852) 5538 3561 during office hours.
+Or you can Email info@showeasy.ai, put Order #12345 in the subject, and colleagues will prioritize your case! 💪
 
-Our team will prioritize your case and respond within 24 hours by phone or 10 working days by email.
-```
 
-**Example 3 - Office Visit:**
-```
-You're welcome to visit our office in person:
+Example 3 - Office Visit:
 
-📍 6/F, V Point
-   18 Tang Lung Street
-   Causeway Bay, Hong Kong
+You want to visit us in person? Welcome! 🙌
 
-We're near Causeway Bay MTR Station. For office hours or to schedule a visit,
-please call (852) 5538 3561 in advance.
-```
+📍 Address: 6/F, V Point, 18 Tang Lung Street, Causeway Bay
 
-## Important Notes
+It's just near the Causeway Bay MTR station. But before you come up, it's best to call (852) 5538 3561 to make an appointment,
+Just so you don't make a wasted trip~ 😉
 
-### What NOT to Promise
-- Do not promise immediate responses outside stated timeframes
-- Do not guarantee specific outcomes before human review
-- Do not provide personal contact details of staff members
-- Do not suggest social media as official support channel unless verified
 
-### Privacy Considerations
-- Never ask users to share sensitive information in chat
-- Direct users to secure channels (phone/email) for personal details
-- Remind users not to share passwords or full payment card numbers
+Important Notes (Smart Tips)
 
-### Multilingual Support
-- Contact information should be provided in user's preferred language
-- Phone support language capabilities should be mentioned if limited
-- Email support can handle traditional Chinese, simplified Chinese, and English
+❌ Don't Over-promise: Unless certain, don't promise the customer "Money will definitely be refunded" or "Someone will reply instantly".
+
+🔒 Privacy First: Never ask the customer for full credit card numbers or passwords in the Chatroom. Ask them to use Phone or Email for sensitive info.
+
+🌍 Multilingual: Remember to match the contact info language to what the user is using (Chinese/English).
