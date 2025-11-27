@@ -17,10 +17,15 @@ Design Patterns:
 """
 
 import dspy
+import logging
 from typing import Dict, Optional
 from contextlib import contextmanager
 from config.database import DatabaseConnectionPool
 from app.services.notification import NotificationService
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 @contextmanager
@@ -34,13 +39,19 @@ def get_db_connection():
     Yields:
         MySQL connection object
     """
+    logger.debug("[BookingEnquiry] Attempting to get database connection...")
     pool = DatabaseConnectionPool()
     connection = pool.get_connection()
+    logger.debug("[BookingEnquiry] Database connection obtained successfully")
     try:
         yield connection
+    except Exception as e:
+        logger.error(f"[BookingEnquiry] Database connection error: {e}", exc_info=True)
+        raise
     finally:
         if connection.is_connected():
             connection.close()
+            logger.debug("[BookingEnquiry] Database connection closed")
 
 
 def _create_booking_enquiry(
@@ -97,27 +108,46 @@ def _create_booking_enquiry(
         - Notification failure → Error with support contact
         - Database exception → Generic error with support contact
     """
+    # Log all input parameters for debugging
+    # Using INFO level for key parameters to ensure visibility even without DEBUG mode
+    logger.info(f"[BookingEnquiry] === Starting booking enquiry creation ===")
+    logger.info(f"[BookingEnquiry] Key params: event_id={event_id}, merchant_name={merchant_name}, enquiry_type={enquiry_type}, contact_email={contact_email}")
+    logger.debug(f"[BookingEnquiry] Full input parameters:")
+    logger.debug(f"  - user_message: {user_message[:100]}..." if len(user_message) > 100 else f"  - user_message: {user_message}")
+    logger.debug(f"  - contact_email: {contact_email}")
+    logger.debug(f"  - event_id: {event_id}")
+    logger.debug(f"  - merchant_name: {merchant_name}")
+    logger.debug(f"  - contact_phone: {contact_phone}")
+    logger.debug(f"  - enquiry_type: {enquiry_type}")
+    logger.debug(f"  - session_id: {session_id}")
+
     # Validate parameters: must have either event_id OR merchant_name (not both, not neither)
     if not event_id and not merchant_name:
+        logger.warning("[BookingEnquiry] Validation failed: Neither event_id nor merchant_name provided")
         return {
             "status": "error",
             "message": "Please provide either an event ID or merchant name for your enquiry."
         }
 
     if event_id and merchant_name:
+        logger.warning(f"[BookingEnquiry] Validation failed: Both event_id ({event_id}) and merchant_name ({merchant_name}) provided")
         return {
             "status": "error",
             "message": "Please provide either event_id OR merchant_name, not both."
         }
+
+    mode = 'event-based' if event_id else 'merchant-based'
+    logger.info(f"[BookingEnquiry] Parameter validation passed. Mode: {mode}")
 
     try:
         with get_db_connection() as connection:
             cursor = connection.cursor(dictionary=True)
 
             # Step 1: Get merchant/organizer info
+            logger.debug("[BookingEnquiry] Step 1: Querying merchant/organizer info...")
             if event_id:
                 # Mode 1: Event-based enquiry (existing behavior)
-                cursor.execute("""
+                query = """
                     SELECT
                         e.organizer_id,
                         o.contact_email as merchant_email,
@@ -127,10 +157,12 @@ def _create_booking_enquiry(
                     FROM events e
                     INNER JOIN organizers o ON e.organizer_id = o.id
                     WHERE e.id = %s AND e.event_status = 'published'
-                """, (event_id,))
+                """
+                logger.debug(f"[BookingEnquiry] Executing event-based query for event_id={event_id}")
+                cursor.execute(query, (event_id,))
             else:
                 # Mode 2: Merchant-based enquiry (new behavior for restaurants)
-                cursor.execute("""
+                query = """
                     SELECT
                         o.id as organizer_id,
                         o.contact_email as merchant_email,
@@ -141,35 +173,40 @@ def _create_booking_enquiry(
                     WHERE JSON_UNQUOTE(JSON_EXTRACT(o.name, '$.en')) LIKE %s
                        OR JSON_UNQUOTE(JSON_EXTRACT(o.name, '$.zh_tw')) LIKE %s
                     LIMIT 1
-                """, (f"%{merchant_name}%", f"%{merchant_name}%"))
+                """
+                logger.debug(f"[BookingEnquiry] Executing merchant-based query for merchant_name={merchant_name}")
+                cursor.execute(query, (f"%{merchant_name}%", f"%{merchant_name}%"))
 
             merchant_data = cursor.fetchone()
+            logger.info(f"[BookingEnquiry] Step 1 result: merchant_data={'found' if merchant_data else 'NOT FOUND'}")
+            logger.debug(f"[BookingEnquiry] Full query result: {merchant_data}")
 
             if not merchant_data:
                 if event_id:
+                    logger.warning(f"[BookingEnquiry] Event not found for event_id={event_id}")
                     return {
                         "status": "error",
                         "message": "Event not found or not available for booking enquiries. Please check the event ID and try again."
                     }
                 else:
+                    logger.warning(f"[BookingEnquiry] Merchant not found for merchant_name={merchant_name}")
                     return {
                         "status": "error",
                         "message": f"Merchant '{merchant_name}' not found. Please check the spelling or contact support at info@showeasy.ai"
                     }
 
             if not merchant_data.get('merchant_email'):
+                logger.warning(f"[BookingEnquiry] Merchant found but no email: organizer_id={merchant_data.get('organizer_id')}")
                 return {
                     "status": "error",
                     "message": "Merchant contact information not available. Please contact support at info@showeasy.ai"
                 }
 
+            logger.info(f"[BookingEnquiry] Merchant found: organizer_id={merchant_data.get('organizer_id')}, email={merchant_data.get('merchant_email')}")
+
             # Step 2: Create enquiry record
-            cursor.execute("""
-                INSERT INTO booking_enquiries
-                (event_id, organizer_id, session_id, enquiry_type, user_message, contact_email,
-                 contact_phone, merchant_email, merchant_phone, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
-            """, (
+            logger.info("[BookingEnquiry] Step 2: Creating enquiry record in database...")
+            insert_params = (
                 event_id,  # NULL for merchant-based enquiries
                 merchant_data['organizer_id'],
                 session_id,  # Optional - may be NULL if not provided
@@ -179,14 +216,31 @@ def _create_booking_enquiry(
                 contact_phone,
                 merchant_data['merchant_email'],
                 merchant_data['merchant_phone']
-            ))
+            )
+            logger.debug(f"[BookingEnquiry] INSERT params: event_id={event_id}, organizer_id={merchant_data['organizer_id']}, session_id={session_id}, enquiry_type={enquiry_type}")
+
+            cursor.execute("""
+                INSERT INTO booking_enquiries
+                (event_id, organizer_id, session_id, enquiry_type, user_message, contact_email,
+                 contact_phone, merchant_email, merchant_phone, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+            """, insert_params)
 
             connection.commit()
             enquiry_id = cursor.lastrowid
+            logger.info(f"[BookingEnquiry] Enquiry record created successfully: enquiry_id={enquiry_id}")
 
             # Step 3: Send notification to merchant
+            logger.info("[BookingEnquiry] Step 3: Sending notification to merchant...")
             notification_service = NotificationService()
             display_name = merchant_data['event_name'] if event_id else merchant_data['merchant_name']
+            logger.debug(f"[BookingEnquiry] NotificationService initialized, channel: {notification_service.get_current_channel()}")
+
+            logger.debug(f"[BookingEnquiry] Calling send_enquiry_to_merchant with:")
+            logger.debug(f"  - enquiry_id: {enquiry_id}")
+            logger.debug(f"  - event_name: {display_name}")
+            logger.debug(f"  - user_email: {contact_email}")
+            logger.debug(f"  - merchant_email: {merchant_data['merchant_email']}")
 
             send_result = notification_service.send_enquiry_to_merchant(
                 enquiry_id=enquiry_id,
@@ -198,28 +252,38 @@ def _create_booking_enquiry(
                 merchant_phone=merchant_data.get('merchant_phone')
             )
 
+            logger.info(f"[BookingEnquiry] Step 3 result: notification success={send_result.get('success')}, channel={send_result.get('channel')}")
+            logger.debug(f"[BookingEnquiry] Full notification result: {send_result}")
+
             if send_result['success']:
                 # Step 4: Update status to 'sent'
+                logger.debug("[BookingEnquiry] Step 4: Updating enquiry status to 'sent'...")
                 cursor.execute("""
                     UPDATE booking_enquiries SET status = 'sent' WHERE id = %s
                 """, (enquiry_id,))
                 connection.commit()
+                logger.info(f"[BookingEnquiry] Enquiry status updated to 'sent' for enquiry_id={enquiry_id}")
 
                 merchant_name_display = merchant_data.get('merchant_name', 'the merchant')
-                return {
+                success_result = {
                     "status": "success",
                     "message": f"Your enquiry has been sent to {merchant_name_display}. Reference: #{enquiry_id}. They will respond within 24-48 hours via email.",
                     "enquiry_id": str(enquiry_id)
                 }
+                logger.info(f"[BookingEnquiry] === Booking enquiry completed successfully: enquiry_id={enquiry_id} ===")
+                return success_result
             else:
+                logger.error(f"[BookingEnquiry] Notification send failed: {send_result}")
                 return {
                     "status": "error",
                     "message": "Failed to send enquiry. Please try again or contact support at info@showeasy.ai"
                 }
 
     except Exception as e:
-        # Log the error for debugging (in production, use proper logging)
-        print(f"[BookingEnquiry] Error creating booking enquiry: {e}")
+        # Log the error with full stack trace for debugging
+        logger.error(f"[BookingEnquiry] Exception creating booking enquiry: {e}", exc_info=True)
+        logger.error(f"[BookingEnquiry] Exception type: {type(e).__name__}")
+        logger.error(f"[BookingEnquiry] Exception args: {e.args}")
 
         return {
             "status": "error",

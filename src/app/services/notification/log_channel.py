@@ -10,6 +10,7 @@ Design Pattern: Strategy Pattern (Concrete Strategy)
 
 import os
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
@@ -18,6 +19,10 @@ from .notification_interface import (
     EnquiryNotification,
     ReplyNotification
 )
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class LogNotificationChannel(NotificationChannel):
@@ -40,13 +45,21 @@ class LogNotificationChannel(NotificationChannel):
         Args:
             log_path: Path to log file (default: logs/notifications.log)
         """
+        logger.debug(f"[LogNotificationChannel] Initializing with log_path={log_path}")
         self.log_path = log_path
         self._ensure_log_directory()
+        logger.debug(f"[LogNotificationChannel] Initialization complete")
 
     def _ensure_log_directory(self):
         """Create log directory if it doesn't exist."""
         log_dir = Path(self.log_path).parent
-        log_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"[LogNotificationChannel] Ensuring log directory exists: {log_dir}")
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"[LogNotificationChannel] Log directory ready: {log_dir}")
+        except Exception as e:
+            logger.error(f"[LogNotificationChannel] Failed to create log directory: {e}", exc_info=True)
+            raise
 
     def _write_log(self, log_entry: Dict) -> bool:
         """
@@ -58,13 +71,27 @@ class LogNotificationChannel(NotificationChannel):
         Returns:
             Boolean indicating success
         """
+        logger.debug(f"[LogNotificationChannel] Writing log entry to {self.log_path}")
         try:
+            # Check if file is writable before attempting
+            log_dir = Path(self.log_path).parent
+            if not os.access(log_dir, os.W_OK):
+                logger.error(f"[LogNotificationChannel] Log directory not writable: {log_dir}")
+                return False
+
             with open(self.log_path, 'a', encoding='utf-8') as f:
                 json.dump(log_entry, f, ensure_ascii=False)
                 f.write('\n')
+            logger.info(f"[LogNotificationChannel] Log entry written successfully to {self.log_path}")
             return True
+        except PermissionError as e:
+            logger.error(f"[LogNotificationChannel] Permission denied writing to {self.log_path}: {e}", exc_info=True)
+            return False
+        except OSError as e:
+            logger.error(f"[LogNotificationChannel] OS error writing to {self.log_path}: {e}", exc_info=True)
+            return False
         except Exception as e:
-            print(f"[LogNotificationChannel] Error writing log: {e}")
+            logger.error(f"[LogNotificationChannel] Unexpected error writing log: {type(e).__name__}: {e}", exc_info=True)
             return False
 
     def send_enquiry_to_merchant(self, notification: EnquiryNotification) -> Dict[str, any]:
@@ -73,6 +100,10 @@ class LogNotificationChannel(NotificationChannel):
 
         Creates a structured log entry with all enquiry details in JSON format.
         """
+        logger.info(f"[LogNotificationChannel] send_enquiry_to_merchant called for enquiry_id={notification.enquiry_id}")
+        logger.info(f"[LogNotificationChannel] Writing to log_path={self.log_path}")
+        logger.debug(f"[LogNotificationChannel] Notification details: event_name={notification.event_name}, merchant_email={notification.merchant_email}")
+
         log_entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "type": "enquiry_to_merchant",
@@ -92,14 +123,19 @@ class LogNotificationChannel(NotificationChannel):
             "formatted_message": self._format_enquiry_message(notification)
         }
 
+        logger.info(f"[LogNotificationChannel] Log entry created, writing to file...")
         success = self._write_log(log_entry)
 
-        return {
+        result = {
             "success": success,
             "message": f"Enquiry logged to {self.log_path}" if success else "Failed to log enquiry",
             "channel": "log",
             "log_path": self.log_path if success else None
         }
+        logger.info(f"[LogNotificationChannel] Returning result: success={success}")
+        if not success:
+            logger.error(f"[LogNotificationChannel] Failed to write log entry to {self.log_path}")
+        return result
 
     def send_reply_to_user(self, notification: ReplyNotification) -> Dict[str, any]:
         """
@@ -141,10 +177,15 @@ class LogNotificationChannel(NotificationChannel):
         Returns:
             True if log directory exists and is writable
         """
+        logger.debug(f"[LogNotificationChannel] Checking availability for log_path={self.log_path}")
         try:
             self._ensure_log_directory()
-            return os.access(Path(self.log_path).parent, os.W_OK)
-        except Exception:
+            log_dir = Path(self.log_path).parent
+            is_writable = os.access(log_dir, os.W_OK)
+            logger.debug(f"[LogNotificationChannel] Log directory {log_dir} writable: {is_writable}")
+            return is_writable
+        except Exception as e:
+            logger.error(f"[LogNotificationChannel] Availability check failed: {e}", exc_info=True)
             return False
 
     def _format_enquiry_message(self, notification: EnquiryNotification) -> str:
