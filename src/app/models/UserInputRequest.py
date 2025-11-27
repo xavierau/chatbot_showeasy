@@ -10,3 +10,9 @@ class UserInputRequest(BaseModel):
 
 class GetMessagesRequest(BaseModel):
     session_id: str
+
+
+class MessageRequest(BaseModel):
+    message: str
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
