@@ -153,6 +153,7 @@ User Input → PreGuardrails → ReAct Agent → PostGuardrails → Response
      - `MembershipInfo`: Membership benefits and upgrades
      - `TicketInfo`: Ticket purchasing assistance
      - `GeneralHelp`: Platform help and contact info
+     - `BookingEnquiry`: Send custom booking enquiries to merchants
    - Uses `ConversationSignature` for conversation handling
 
 3. **PostGuardrails** (`src/app/llm/guardrails/PostGuardrails.py`)
@@ -165,7 +166,7 @@ User Input → PreGuardrails → ReAct Agent → PostGuardrails → Response
 **Tools** (`src/app/llm/tools/`)
 - Each tool is a DSPy module handling one domain
 - Tools follow Single Responsibility Principle
-- Located at: `SearchEvent.py`, `MembershipInfo.py`, `TicketInfo.py`, `GeneralHelp.py`, `Thinking.py`
+- Located at: `SearchEvent.py`, `MembershipInfo.py`, `TicketInfo.py`, `GeneralHelp.py`, `Thinking.py`, `BookingEnquiry.py`
 
 **Signatures** (`src/app/llm/signatures/`)
 - DSPy signatures define input/output contracts
@@ -374,3 +375,341 @@ For issues requiring investigation:
 - **Guardrail issues**: *"@agent-bug-hunter Debug why PreGuardrails is misclassifying valid inputs as attacks"*
 - **Performance issues**: *"@agent-bug-hunter Analyze why the API response time increased to 5 seconds"*
 - **Integration failures**: *"@agent-bug-hunter Find why Langfuse traces are incomplete for multi-tool calls"*
+
+## Booking Enquiry System
+
+**Status:** ✅ Implemented (v1.0.0)
+**Date:** 2025-11-14
+
+The Booking Enquiry System enables users to send custom booking requests directly to event organizers through the chatbot, with LLM-powered reply formatting and multi-channel notifications.
+
+### Architecture Overview
+
+```
+User → BookingEnquiry Tool → Database → Notification Service → Merchant
+                                                                    ↓
+User ← Conversation History ← LLM Analyzer ← API Endpoint ← Merchant Reply
+```
+
+### Components
+
+#### 1. BookingEnquiry DSPy Tool
+
+**Location:** `src/app/llm/tools/BookingEnquiry.py`
+**Type:** DSPy Tool (private function + wrapper)
+
+**When to Use:**
+- User wants custom booking arrangements
+- Group bookings (20+ people)
+- Special requests (accessibility, corporate events)
+- Questions for organizers before purchasing
+
+**Example Triggers:**
+```
+"I want to book 50 tickets for my company"
+"Do you offer group discounts?"
+"Can we arrange a private showing?"
+"I need wheelchair access for 5 people"
+```
+
+**Parameters:**
+- `event_id` (required): Event ID from SearchEvent
+- `user_message` (required): User's enquiry message
+- `contact_email` (required): User's email for replies
+- `contact_phone` (optional): User's phone
+- `enquiry_type` (optional): 'custom_booking', 'group_booking', 'special_request'
+
+**Returns:**
+```python
+{
+    "status": "success" | "error",
+    "message": "Human-readable confirmation",
+    "enquiry_id": "123"  # Reference number
+}
+```
+
+**Database Operations:**
+1. Queries `events` and `organizers` for merchant info
+2. Inserts record into `booking_enquiries` table
+3. Updates status to 'sent' after notification
+
+#### 2. MerchantReplyAnalyzer DSPy Module
+
+**Location:** `src/app/llm/modules/MerchantReplyAnalyzer.py`
+**Type:** DSPy Module with ChainOfThought
+
+**Purpose:** Transform informal merchant replies into professional, clear user messages
+
+**Example:**
+```
+Input (Merchant): "yes 15% discount for 50+ ppl call 1234"
+
+Output (User): "Great news! The event organizer has confirmed they can
+accommodate your group booking request.
+
+Details:
+• Group discount: 15% off for groups of 50 or more people
+• Contact: Please call (852) 1234 to finalize the booking
+
+If you have additional questions, feel free to continue the conversation!"
+```
+
+**Signature:**
+```python
+class MerchantReplySignature(dspy.Signature):
+    user_enquiry: str
+    merchant_reply: str
+    event_name: str
+    formatted_response: str  # LLM output
+```
+
+#### 3. Notification Service (Strategy Pattern)
+
+**Location:** `src/app/services/notification/`
+
+**Current Implementation:** LogNotificationChannel (test mode)
+**Planned:** EmailNotificationChannel, WhatsAppNotificationChannel
+
+**Strategy Pattern Interface:**
+```python
+class NotificationChannel(ABC):
+    @abstractmethod
+    def send_enquiry_to_merchant(self, notification: EnquiryNotification) -> Dict
+
+    @abstractmethod
+    def send_reply_to_user(self, notification: ReplyNotification) -> Dict
+```
+
+**Configuration:**
+```bash
+# .env
+NOTIFICATION_CHANNEL=log  # 'log', 'email', 'whatsapp' (future)
+NOTIFICATION_LOG_PATH=logs/notifications.log
+```
+
+**Log Channel Usage:**
+- Writes JSON Lines to log file
+- Perfect for development/testing
+- Shows what email/SMS would look like
+- No external service dependencies
+
+**Future Channels:**
+- **Email:** SMTP/SendGrid/AWS SES
+- **WhatsApp:** Twilio/WhatsApp Business API
+- **SMS:** Twilio/AWS SNS
+
+#### 4. API Endpoint: Merchant Replies
+
+**Endpoint:** `POST /api/enquiry-reply`
+
+**Request:**
+```python
+{
+    "enquiry_id": 123,
+    "reply_message": "Yes, we can accommodate...",
+    "reply_channel": "email"  # 'email', 'whatsapp', 'api'
+}
+```
+
+**Workflow:**
+1. Validates enquiry exists
+2. Uses MerchantReplyAnalyzer to format reply (LLM)
+3. Stores reply in `enquiry_replies` table
+4. Updates enquiry status to 'replied'
+5. Sends notification to user
+6. Updates conversation history
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Reply delivered to user"
+}
+```
+
+### Database Schema
+
+#### booking_enquiries Table
+
+```sql
+CREATE TABLE booking_enquiries (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NULL,
+    session_id VARCHAR(255) NOT NULL,
+    event_id BIGINT NOT NULL,
+    organizer_id BIGINT NOT NULL,
+    enquiry_type VARCHAR(50) NOT NULL DEFAULT 'custom_booking',
+    user_message TEXT NOT NULL,
+    contact_email VARCHAR(255) NOT NULL,
+    contact_phone VARCHAR(50) NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    merchant_email VARCHAR(255) NOT NULL,
+    merchant_phone VARCHAR(50) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_user_session (user_id, session_id),
+    INDEX idx_status (status)
+);
+```
+
+**Status Flow:** `pending → sent → replied → completed`
+
+#### enquiry_replies Table
+
+```sql
+CREATE TABLE enquiry_replies (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    enquiry_id BIGINT NOT NULL,
+    reply_from VARCHAR(50) NOT NULL,  -- 'merchant', 'user', 'system'
+    reply_message TEXT NOT NULL,
+    reply_channel VARCHAR(50) NOT NULL DEFAULT 'api',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (enquiry_id) REFERENCES booking_enquiries(id) ON DELETE CASCADE
+);
+```
+
+### Usage Examples
+
+#### Creating an Enquiry via Chatbot
+
+```
+User: I want to book 50 tickets for my company event to the Concert on Dec 15
+
+Agent: [Uses Thinking] User wants group booking
+       [Uses SearchEvent] Finds event ID 123
+       [Uses BookingEnquiry]
+         - event_id: 123
+         - user_message: "Group booking for 50 people..."
+         - enquiry_type: "group_booking"
+
+Agent Response: "Your enquiry has been sent to the event organizer.
+                 Reference: #456. They will respond within 24-48 hours."
+
+[Database: enquiry created, notification sent to merchant]
+```
+
+#### Merchant Submitting Reply
+
+```bash
+curl -X POST http://localhost:3010/api/enquiry-reply \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enquiry_id": 456,
+    "reply_message": "Yes, we can accommodate 50 people. 15% group discount. Call us at 1234.",
+    "reply_channel": "email"
+  }'
+```
+
+**Result:**
+- Reply formatted by MerchantReplyAnalyzer (LLM)
+- Stored in database
+- User receives formatted notification
+- Conversation history updated
+
+### Configuration
+
+#### Environment Variables
+
+```bash
+# Notification Channel
+NOTIFICATION_CHANNEL=log  # Current: 'log', Future: 'email', 'whatsapp'
+NOTIFICATION_LOG_PATH=logs/notifications.log
+
+# Email (for future email channel)
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=your_email
+# SMTP_PASSWORD=your_password
+# FROM_EMAIL=noreply@showeasy.ai
+
+# WhatsApp (for future WhatsApp channel)
+# WHATSAPP_ENABLED=false
+# WHATSAPP_API_KEY=your_api_key
+
+# API Base URL (for reply links)
+API_BASE_URL=http://localhost:3010
+```
+
+#### Database Migration
+
+```bash
+# Run migration
+mysql -u root -p showeasy < migrations/001_booking_enquiries.sql
+
+# Verify tables created
+mysql -u root -p showeasy -e "SHOW TABLES LIKE '%enquir%';"
+```
+
+### Testing
+
+#### Unit Tests
+
+```bash
+# Test BookingEnquiry tool
+PYTHONPATH=src pytest tests/test_booking_enquiry_tool.py
+
+# Test MerchantReplyAnalyzer
+PYTHONPATH=src pytest tests/test_merchant_reply_analyzer.py
+
+# Test Notification Service
+PYTHONPATH=src pytest tests/test_notification_service.py
+
+# Test API endpoint
+PYTHONPATH=src pytest tests/test_enquiry_api.py
+```
+
+#### Manual Testing
+
+```bash
+# 1. Start server
+PYTHONPATH=src python src/main.py
+
+# 2. Create enquiry via chatbot:
+# User message: "I want to book 50 tickets for the Concert"
+
+# 3. Check notification log
+tail -f logs/notifications.log
+
+# 4. Submit merchant reply
+curl -X POST http://localhost:3010/api/enquiry-reply \
+  -H "Content-Type: application/json" \
+  -d '{"enquiry_id": 1, "reply_message": "Test reply"}'
+
+# 5. Verify in database
+mysql -u root -p showeasy -e "SELECT * FROM booking_enquiries;"
+mysql -u root -p showeasy -e "SELECT * FROM enquiry_replies;"
+```
+
+### Design Patterns Applied
+
+✅ **Strategy Pattern:** Pluggable notification channels
+✅ **Facade Pattern:** NotificationService simplifies channel usage
+✅ **Single Responsibility:** Each component has one clear purpose
+✅ **Open/Closed:** Add new channels without modifying existing code
+✅ **Dependency Inversion:** Depend on NotificationChannel abstraction
+
+### Related Documentation
+
+- **Architecture:** `docs/architecture/2025-11-14-booking-enquiry-system.md`
+- **Notification Strategy:** `docs/architecture/2025-11-14-notification-strategy-pattern.md`
+- **Migration Script:** `migrations/001_booking_enquiries.sql`
+
+### Future Enhancements
+
+**Phase 2:** Email channel implementation
+- SendGrid/SMTP integration
+- Email reply-to parsing webhook
+- HTML email templates
+
+**Phase 3:** WhatsApp channel
+- Twilio WhatsApp API
+- Template messages
+- Interactive buttons
+
+**Phase 4:** Advanced features
+- User enquiry history endpoint
+- Merchant dashboard
+- Auto-reminders after 48 hours
+- Enquiry analytics

@@ -16,3 +16,7 @@ class MessageRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
+
+
+class GetUserSessionRequest(BaseModel):
+    user_id: str

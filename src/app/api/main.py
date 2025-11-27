@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import os
 import dspy
 from typing import Optional
-from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest, MessageRequest, GetUserSessionRequest
+from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest, MessageRequest
 from ..models import ABTestConfig, ModuleABConfig, ABVariant, EnquiryReplyRequest
 from ..llm.modules.ConversationOrchestrator import ConversationOrchestrator
 from ..memory_manager import MemoryManager, FileMemoryService
