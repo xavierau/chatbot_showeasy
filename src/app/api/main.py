@@ -18,7 +18,11 @@ from langfuse import observe, get_client
 configure_llm()
 configure_logging()
 
-langfuse = get_client()
+# Langfuse client - may be None if unavailable
+try:
+    langfuse = get_client()
+except Exception:
+    langfuse = None
 app = FastAPI()
 app.add_middleware(LoggingMiddleware)
 
@@ -162,36 +166,40 @@ def chat(request: UserInputRequest):
                                   previous_conversation=previous_conversation,
                                   page_context=content)
 
-        # Log AB test metadata to Langfuse
-        if ab_config and ab_config.is_any_variant_active():
-            langfuse.update_current_trace(
-                user_id=request.user_id,
-                session_id=request.session_id,
-                metadata={
-                    "ab_test": {
-                        "pre_guardrails": {
-                            "enabled": ab_config.pre_guardrails.enabled,
-                            "variant": ab_config.pre_guardrails.variant.value,
-                            "description": ab_config.pre_guardrails.description
-                        },
-                        "post_guardrails": {
-                            "enabled": ab_config.post_guardrails.enabled,
-                            "variant": ab_config.post_guardrails.variant.value,
-                            "description": ab_config.post_guardrails.description
-                        },
-                        "agent": {
-                            "enabled": ab_config.agent.enabled,
-                            "variant": ab_config.agent.variant.value,
-                            "description": ab_config.agent.description
+        # Log AB test metadata to Langfuse (skip if unavailable)
+        if langfuse:
+            try:
+                if ab_config and ab_config.is_any_variant_active():
+                    langfuse.update_current_trace(
+                        user_id=request.user_id,
+                        session_id=request.session_id,
+                        metadata={
+                            "ab_test": {
+                                "pre_guardrails": {
+                                    "enabled": ab_config.pre_guardrails.enabled,
+                                    "variant": ab_config.pre_guardrails.variant.value,
+                                    "description": ab_config.pre_guardrails.description
+                                },
+                                "post_guardrails": {
+                                    "enabled": ab_config.post_guardrails.enabled,
+                                    "variant": ab_config.post_guardrails.variant.value,
+                                    "description": ab_config.post_guardrails.description
+                                },
+                                "agent": {
+                                    "enabled": ab_config.agent.enabled,
+                                    "variant": ab_config.agent.variant.value,
+                                    "description": ab_config.agent.description
+                                }
+                            }
                         }
-                    }
-                }
-            )
-        else:
-            langfuse.update_current_trace(
-                user_id=request.user_id,
-                session_id=request.session_id,
-            )
+                    )
+                else:
+                    langfuse.update_current_trace(
+                        user_id=request.user_id,
+                        session_id=request.session_id,
+                    )
+            except Exception:
+                pass  # Langfuse unavailable, skip tracing
 
         return prediction.answer
 
@@ -270,36 +278,40 @@ def receive_message(request: MessageRequest):
             page_context=None
         )
 
-        # Log AB test metadata to Langfuse
-        if ab_config and ab_config.is_any_variant_active():
-            langfuse.update_current_trace(
-                user_id=user_id,
-                session_id=session_id,
-                metadata={
-                    "ab_test": {
-                        "pre_guardrails": {
-                            "enabled": ab_config.pre_guardrails.enabled,
-                            "variant": ab_config.pre_guardrails.variant.value,
-                            "description": ab_config.pre_guardrails.description
-                        },
-                        "post_guardrails": {
-                            "enabled": ab_config.post_guardrails.enabled,
-                            "variant": ab_config.post_guardrails.variant.value,
-                            "description": ab_config.post_guardrails.description
-                        },
-                        "agent": {
-                            "enabled": ab_config.agent.enabled,
-                            "variant": ab_config.agent.variant.value,
-                            "description": ab_config.agent.description
+        # Log AB test metadata to Langfuse (skip if unavailable)
+        if langfuse:
+            try:
+                if ab_config and ab_config.is_any_variant_active():
+                    langfuse.update_current_trace(
+                        user_id=user_id,
+                        session_id=session_id,
+                        metadata={
+                            "ab_test": {
+                                "pre_guardrails": {
+                                    "enabled": ab_config.pre_guardrails.enabled,
+                                    "variant": ab_config.pre_guardrails.variant.value,
+                                    "description": ab_config.pre_guardrails.description
+                                },
+                                "post_guardrails": {
+                                    "enabled": ab_config.post_guardrails.enabled,
+                                    "variant": ab_config.post_guardrails.variant.value,
+                                    "description": ab_config.post_guardrails.description
+                                },
+                                "agent": {
+                                    "enabled": ab_config.agent.enabled,
+                                    "variant": ab_config.agent.variant.value,
+                                    "description": ab_config.agent.description
+                                }
+                            }
                         }
-                    }
-                }
-            )
-        else:
-            langfuse.update_current_trace(
-                user_id=user_id,
-                session_id=session_id,
-            )
+                    )
+                else:
+                    langfuse.update_current_trace(
+                        user_id=user_id,
+                        session_id=session_id,
+                    )
+            except Exception:
+                pass  # Langfuse unavailable, skip tracing
 
         return prediction.answer
 
