@@ -16,11 +16,14 @@ def configure_llm():
 
     langfuse = get_client()
 
-    # Verify connection
-    if langfuse.auth_check():
-        print("Langfuse client is authenticated and ready!")
-    else:
-        print("Authentication failed. Please check your credentials and host.")
+    # Verify connection (non-blocking - don't crash on failure)
+    try:
+        if langfuse.auth_check():
+            print("Langfuse client is authenticated and ready!")
+        else:
+            print("Warning: Langfuse authentication failed. Tracing may not work.")
+    except Exception as e:
+        print(f"Warning: Could not connect to Langfuse: {e}. Continuing without tracing.")
 
     DSPyInstrumentor().instrument()
 
