@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import os
 import dspy
 from typing import Optional
-from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest, MessageRequest
+from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest, MessageRequest, GetUserSessionRequest
 from ..models import ABTestConfig, ModuleABConfig, ABVariant, EnquiryReplyRequest
 from ..llm.modules.ConversationOrchestrator import ConversationOrchestrator
 from ..memory_manager import MemoryManager, FileMemoryService
@@ -247,9 +247,10 @@ def get_health():
 @app.post("/api/message")
 def receive_message(request: MessageRequest):
     """Receive a message with optional user and session identifiers."""
-    # Generate session_id if not provided
-    session_id = request.session_id or str(uuid.uuid4())
+    # Generate user_id if not provided, then derive session_id from user_id
+    # This ensures 1:1 mapping: each user_id has exactly one session_id
     user_id = request.user_id or str(uuid.uuid4())
+    session_id = request.session_id or f"session_{user_id}"
 
     log = logger.bind(
         user_id=user_id,
