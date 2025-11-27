@@ -179,7 +179,7 @@ class ConversationOrchestrator(dspy.Module):
             )
             response_message = agent_prediction.answer
             print(f"[ReAct Agent] Generated response with {len(agent_prediction.trajectory) if hasattr(agent_prediction, 'trajectory') else 0} tool calls")
-            return ndspy.Prediction(answer=response_message)
+            return dspy.Prediction(answer=response_message)
         except Exception as e:
             # ReAct agent failure - provide helpful fallback
             print(f"[ReAct Agent] Error during execution: {e}")
