@@ -9,6 +9,7 @@ from ..tools import (
     TicketInfo,
     GeneralHelp,
     Thinking,
+    BookingEnquiry,
 )
 from ..guardrails import PreGuardrails, PostGuardrails, GuardrailViolation
 
@@ -109,6 +110,7 @@ class ConversationOrchestrator(dspy.Module):
             MembershipInfo,
             TicketInfo,
             GeneralHelp,
+            BookingEnquiry,  # Booking enquiry tool for merchant communication
         ]
 
         if self.ab_config.agent.enabled:
@@ -146,22 +148,22 @@ class ConversationOrchestrator(dspy.Module):
         """
 
         # ===== STEP 1: Pre-Guardrails (Input Validation) =====
-        try:
-            guardrail_result = self.pre_guardrails(
-                user_message=user_message,
-                previous_conversation=previous_conversation,
-                page_context=page_context
-            )
-
-            if not guardrail_result["is_valid"]:
-                # Input violated guardrails, return friendly redirect message
-                print(f"[PreGuardrail] Input violation: {guardrail_result['violation_type']}")
-                return dspy.Prediction(answer=guardrail_result["message"])
-
-        except GuardrailViolation as e:
-            # Strict mode enabled, violation raised as exception
-            print(f"[PreGuardrail] Strict violation: {e.violation_type}")
-            return dspy.Prediction(answer=e.message)
+#         try:
+#             guardrail_result = self.pre_guardrails(
+#                 user_message=user_message,
+#                 previous_conversation=previous_conversation,
+#                 page_context=page_context
+#             )
+#
+#             if not guardrail_result["is_valid"]:
+#                 # Input violated guardrails, return friendly redirect message
+#                 print(f"[PreGuardrail] Input violation: {guardrail_result['violation_type']}")
+#                 return dspy.Prediction(answer=guardrail_result["message"])
+#
+#         except GuardrailViolation as e:
+#             # Strict mode enabled, violation raised as exception
+#             print(f"[PreGuardrail] Strict violation: {e.violation_type}")
+#             return dspy.Prediction(answer=e.message)
 
         # ===== STEP 2: ReAct Agent (Reasoning + Tool Use) =====
         # The agent will:

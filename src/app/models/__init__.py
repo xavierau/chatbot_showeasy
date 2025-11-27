@@ -3,6 +3,7 @@ from .ConversationMessage import ConversationMessage
 from .Intent import Intent
 from .SearchEventInput import SearchEventInput
 from .ABTestConfig import ABTestConfig, ModuleABConfig, ABVariant
+from .EnquiryReplyRequest import EnquiryReplyRequest
 
 __all__ = [
     "UserInputRequest",
@@ -12,4 +13,5 @@ __all__ = [
     "ABTestConfig",
     "ModuleABConfig",
     "ABVariant",
+    "EnquiryReplyRequest",
 ]
