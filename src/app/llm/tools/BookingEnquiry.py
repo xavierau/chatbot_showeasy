@@ -27,6 +27,9 @@ from app.services.notification import NotificationService
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+# Valid enquiry types - must match database constraint chk_enquiry_type
+VALID_ENQUIRY_TYPES = {'custom_booking', 'group_booking', 'special_request'}
+
 
 @contextmanager
 def get_db_connection():
@@ -80,10 +83,9 @@ def _create_booking_enquiry(
         merchant_name: Merchant/organizer name (Optional - for direct merchant enquiries)
         contact_phone: User's contact phone (optional)
         enquiry_type: Type of enquiry - one of:
-            - 'custom_booking': Custom booking arrangements
+            - 'custom_booking': Custom booking arrangements (default)
             - 'group_booking': Large group or corporate bookings
             - 'special_request': Special accommodations or questions
-            - 'restaurant_reservation': Restaurant meal package reservations
         session_id: Session ID for tracking conversation context (optional)
 
     Returns:
@@ -136,8 +138,13 @@ def _create_booking_enquiry(
             "message": "Please provide either event_id OR merchant_name, not both."
         }
 
+    # Validate and normalize enquiry_type
+    if enquiry_type not in VALID_ENQUIRY_TYPES:
+        logger.warning(f"[BookingEnquiry] Invalid enquiry_type '{enquiry_type}', defaulting to 'custom_booking'. Valid types: {VALID_ENQUIRY_TYPES}")
+        enquiry_type = 'custom_booking'
+
     mode = 'event-based' if event_id else 'merchant-based'
-    logger.info(f"[BookingEnquiry] Parameter validation passed. Mode: {mode}")
+    logger.info(f"[BookingEnquiry] Parameter validation passed. Mode: {mode}, enquiry_type: {enquiry_type}")
 
     try:
         with get_db_connection() as connection:
@@ -326,7 +333,7 @@ Mode Selection (MUST provide ONE):
 
 Optional Parameters:
 - contact_phone: User's phone number
-- enquiry_type: One of 'custom_booking', 'group_booking', 'special_request', 'restaurant_reservation' (default: 'custom_booking')
+- enquiry_type: One of 'custom_booking', 'group_booking', 'special_request' (default: 'custom_booking')
 
 Example Scenarios:
 
@@ -336,7 +343,7 @@ EVENT-BASED (use event_id):
 - "I need wheelchair access for 5 people at the Theater Show" → use event_id, enquiry_type='special_request'
 
 MERCHANT-BASED (use merchant_name):
-- "I want to make a reservation at ABC Restaurant" → use merchant_name='ABC Restaurant', enquiry_type='restaurant_reservation'
+- "I want to make a reservation at ABC Restaurant" → use merchant_name='ABC Restaurant', enquiry_type='custom_booking'
 - "Does XYZ Dining offer meal packages for 20 people?" → use merchant_name='XYZ Dining', enquiry_type='group_booking'
 - "I want to contact The Fine Bistro about their special menu" → use merchant_name='The Fine Bistro', enquiry_type='custom_booking'
 
