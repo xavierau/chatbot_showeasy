@@ -6,55 +6,49 @@ This tool handles all membership-related queries including:
 - Pricing and plans
 - Upgrade options
 - Discounts and savings
+
+Source: docs/context/zh-TW/02_membership_program.md
 """
 import dspy
-import os
+from pathlib import Path
 from typing import Dict
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _load_membership_context() -> str:
+    """
+    Load membership program content from the context file.
+    Uses lru_cache to avoid repeated file reads.
+
+    Returns:
+        The full content of the membership program context file.
+    """
+    context_file = Path(__file__).parent.parent.parent.parent.parent / "docs" / "context" / "zh-TW" / "02_membership_program.md"
+
+    if not context_file.exists():
+        raise FileNotFoundError(f"Membership context file not found: {context_file}")
+
+    return context_file.read_text(encoding="utf-8")
 
 
 def _get_membership_info(query_type: str = "general") -> Dict[str, str]:
     """
-    Retrieves membership information based on query type.
+    Retrieves membership information from the official context file.
 
     Args:
         query_type: Type of membership query - 'general', 'benefits', 'pricing', 'upgrade'
+                   (Note: query_type is kept for backward compatibility but the full
+                   context is always returned for the LLM to process)
 
     Returns:
-        Dictionary with membership information
+        Dictionary with membership information from docs/context/zh-TW/02_membership_program.md
     """
-    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://showeasy.ai")
-
-    # This would typically query a database or CMS
-    # For now, returning structured information
-
-    membership_data = {
-        "general": """ShowEasy Premium Membership provides exclusive benefits for event enthusiasts.
-        Members enjoy 20% off all ticket purchases, early access to ticket sales, exclusive member-only events,
-        priority customer support, and free ticket cancellations up to 24 hours before events.""",
-
-        "benefits": """Premium Membership Benefits:
-        - 20% discount on all ticket purchases
-        - Early access to tickets (48 hours before general sale)
-        - Exclusive access to member-only events
-        - Priority customer support (24/7 dedicated line)
-        - Free ticket cancellations (up to 24 hours before event)
-        - Monthly event recommendations tailored to your interests
-        - Special member pricing on VIP upgrades""",
-
-        "pricing": """Membership Plans:
-        - Monthly Plan: $9.99/month (cancel anytime)
-        - Annual Plan: $99/year (save $20, 2 months free)
-        - Premium Plus: $199/year (includes all benefits + guaranteed tickets for sold-out events)
-
-        The membership pays for itself after purchasing just 3-4 tickets!""",
-
-        "upgrade": f"""Upgrade to Premium Membership today!
-        Visit your account settings or go to {event_platform_base_url}/membership to upgrade.
-        Current members can upgrade to Premium Plus at any time and receive prorated credits.
-        New members get their first month at 50% off!"""
-    }
-
-    return {"info": membership_data.get(query_type, membership_data["general"])}
+    try:
+        membership_content = _load_membership_context()
+        return {"info": membership_content}
+    except FileNotFoundError as e:
+        return {"info": f"Error loading membership information: {e}"}
 
 
 # Create DSPy Tool for membership information

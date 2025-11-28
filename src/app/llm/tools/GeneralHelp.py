@@ -6,70 +6,66 @@ This tool handles:
 - Account management
 - General FAQs
 - Platform policies
+- Contact information
+- Customer service
+
+Source: docs/context/zh-TW/
+- 01_platform_overview.md
+- 04_customer_service.md
+- 05_contact_information.md
 """
 import dspy
-import os
+from pathlib import Path
 from typing import Dict
+from functools import lru_cache
 
 
-def _get_general_help(category: str = "navigation") -> Dict[str, str]:
+@lru_cache(maxsize=1)
+def _load_general_help_context() -> str:
     """
-    Retrieves general help information.
+    Load general help content from the context files.
+    Combines platform overview, customer service, and contact information.
+    Uses lru_cache to avoid repeated file reads.
+
+    Returns:
+        The combined content of the general help context files.
+    """
+    context_dir = Path(__file__).parent.parent.parent.parent.parent / "docs" / "context" / "zh-TW"
+
+    context_files = [
+        "01_platform_overview.md",
+        "04_customer_service.md",
+        "05_contact_information.md",
+    ]
+
+    combined_content = []
+    for filename in context_files:
+        file_path = context_dir / filename
+        if file_path.exists():
+            combined_content.append(file_path.read_text(encoding="utf-8"))
+        else:
+            combined_content.append(f"[Warning: {filename} not found]")
+
+    return "\n\n---\n\n".join(combined_content)
+
+
+def _get_general_help(category: str = "general") -> Dict[str, str]:
+    """
+    Retrieves general help information from the official context files.
 
     Args:
         category: Category of help - 'navigation', 'account', 'policies', 'features', 'contact'
+                 (Note: category is kept for backward compatibility but the full
+                 context is always returned for the LLM to process)
 
     Returns:
-        Dictionary with help information
+        Dictionary with help information from docs/context/zh-TW/
     """
-    event_platform_base_url = os.getenv("EVENT_PLATFORM_BASE_URL", "https://showeasy.ai")
-
-    help_info = {
-        "navigation": """Platform Navigation:
-        - Home: Browse featured and upcoming events
-        - Search: Find events by category, location, or date
-        - My Events: View your purchased tickets and upcoming events
-        - Favorites: Save events you're interested in
-        - Account: Manage profile, payment methods, and membership
-
-        Use the search bar at the top to quickly find any event!""",
-
-        "account": """Account Management:
-        - Profile: Update your name, email, and preferences
-        - Payment Methods: Add/remove credit cards and payment options
-        - Order History: View all past ticket purchases
-        - Preferences: Set favorite categories and notification settings
-        - Membership: View or upgrade your membership status
-
-        Access your account by clicking your profile icon in the top right.""",
-
-        "policies": f"""Platform Policies:
-        - Privacy Policy: We protect your personal information
-        - Terms of Service: Rules and guidelines for platform use
-        - Cookie Policy: How we use cookies to enhance your experience
-        - Accessibility: We're committed to making events accessible to everyone
-
-        Full policy documents available at {event_platform_base_url}/policies""",
-
-        "features": """Platform Features:
-        - Smart Search: AI-powered event recommendations
-        - Event Reminders: Never miss events you care about
-        - Social Sharing: Share events with friends
-        - Personalized Feed: Events tailored to your interests
-        - Mobile App: Access tickets and discover events on the go
-        - Wishlist: Save events for later
-
-        Premium members get enhanced features like early access and exclusive events!""",
-
-        "contact": """Contact Customer Support:
-        - Phone: (852) 5538 3561 (answered within 24 hours)
-        - Email: info@showeasy.ai (reply within 10 working days)
-        - Office: 6/F, V Point, 18 Tang Lung Street, Causeway Bay, Hong Kong
-
-        For account-specific issues, make sure you're logged in when contacting support."""
-    }
-
-    return {"info": help_info.get(category, help_info["navigation"])}
+    try:
+        help_content = _load_general_help_context()
+        return {"info": help_content}
+    except Exception as e:
+        return {"info": f"Error loading help information: {e}"}
 
 
 # Create DSPy Tool for general help
