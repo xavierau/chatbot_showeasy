@@ -27,12 +27,14 @@ from .notification_interface import (
     ReplyNotification
 )
 from .log_channel import LogNotificationChannel
+from .email_channel import EmailNotificationChannel
 from .notification_service import NotificationService
 
 __all__ = [
     "NotificationService",
     "NotificationChannel",
     "LogNotificationChannel",
+    "EmailNotificationChannel",
     "EnquiryNotification",
     "ReplyNotification"
 ]

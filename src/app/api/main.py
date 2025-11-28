@@ -473,3 +473,488 @@ def handle_enquiry_reply(request: EnquiryReplyRequest):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
+
+@app.get("/api/enquiry-confirm")
+def handle_enquiry_confirm(id: int):
+    """
+    API endpoint for merchant to confirm a booking enquiry.
+
+    This is a one-click action from the email button. It:
+    1. Validates the enquiry exists and is not already responded to
+    2. Uses EnquiryResponseFormatter to generate a confirmation message
+    3. Updates the enquiry status to 'confirmed'
+    4. Sends notification to the user
+    5. Updates conversation history
+
+    Args:
+        id: Enquiry ID from query parameter
+
+    Returns:
+        HTML page confirming the action was successful
+    """
+    from config.database import DatabaseConnectionPool
+    from ..llm.modules.EnquiryResponseFormatter import EnquiryResponseFormatter
+    from ..services.notification import NotificationService
+    from fastapi.responses import HTMLResponse
+
+    log = logger.bind(enquiry_id=id, endpoint="/api/enquiry-confirm")
+    log.info("Enquiry confirmation received")
+
+    connection = None
+    try:
+        pool = DatabaseConnectionPool()
+        connection = pool.get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Get enquiry details
+        cursor.execute("""
+            SELECT
+                be.id, be.session_id, be.user_message, be.contact_email,
+                be.contact_phone, be.event_id, be.status,
+                COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(e.name, '$.en')),
+                    JSON_UNQUOTE(JSON_EXTRACT(o.name, '$.en'))
+                ) as event_name
+            FROM booking_enquiries be
+            LEFT JOIN events e ON be.event_id = e.id
+            INNER JOIN organizers o ON be.organizer_id = o.id
+            WHERE be.id = %s
+        """, (id,))
+
+        enquiry = cursor.fetchone()
+
+        if not enquiry:
+            log.warning("Enquiry not found")
+            return HTMLResponse(content=_build_response_html(
+                "Enquiry Not Found",
+                "The enquiry you're looking for doesn't exist or has been removed.",
+                success=False
+            ))
+
+        if enquiry['status'] in ('replied', 'confirmed', 'declined', 'completed'):
+            log.warning("Enquiry already responded", status=enquiry['status'])
+            return HTMLResponse(content=_build_response_html(
+                "Already Responded",
+                f"This enquiry has already been {enquiry['status']}. No further action needed.",
+                success=False
+            ))
+
+        # Generate confirmation message using LLM
+        formatter = EnquiryResponseFormatter()
+        formatted_message = formatter.format_confirmation(
+            user_enquiry=enquiry['user_message'],
+            event_name=enquiry['event_name']
+        )
+
+        log.debug("Confirmation message generated", length=len(formatted_message))
+
+        # Store reply in database
+        cursor.execute("""
+            INSERT INTO enquiry_replies (enquiry_id, reply_from, reply_message, reply_channel)
+            VALUES (%s, 'merchant', %s, %s)
+        """, (id, "CONFIRMED", "email"))
+
+        # Update enquiry status
+        cursor.execute("""
+            UPDATE booking_enquiries SET status = 'confirmed' WHERE id = %s
+        """, (id,))
+
+        connection.commit()
+
+        # Send notification to user
+        notification_service = NotificationService()
+        notification_result = notification_service.send_reply_to_user(
+            enquiry_id=id,
+            event_name=enquiry['event_name'],
+            merchant_reply=formatted_message,
+            user_email=enquiry['contact_email'],
+            user_phone=enquiry.get('contact_phone')
+        )
+
+        if notification_result['success']:
+            log.info("User notification sent", channel=notification_result['channel'])
+        else:
+            log.warning("User notification failed", error=notification_result['message'])
+
+        # Update conversation history
+        if enquiry['session_id']:
+            try:
+                conversation = memory_manager.get_memory(enquiry['session_id'])
+                assistant_message = {"role": "assistant", "content": formatted_message}
+                new_messages = conversation.messages + [assistant_message]
+                new_conversation = dspy.History(messages=new_messages)
+                memory_manager.update_memory(enquiry['session_id'], new_conversation)
+            except Exception as e:
+                log.warning("Failed to update conversation history", error=str(e))
+
+        log.info("Enquiry confirmed successfully")
+        return HTMLResponse(content=_build_response_html(
+            "Booking Confirmed!",
+            f"Thank you for confirming the booking for '{enquiry['event_name']}'. "
+            "The customer has been notified.",
+            success=True
+        ))
+
+    except Exception as e:
+        log.error("Error confirming enquiry", error=str(e))
+        return HTMLResponse(content=_build_response_html(
+            "Error",
+            f"An error occurred: {str(e)}. Please try again or contact support.",
+            success=False
+        ))
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+@app.get("/api/enquiry-decline")
+def handle_enquiry_decline_page(id: int):
+    """
+    Show a form for merchant to provide decline reason.
+
+    Args:
+        id: Enquiry ID from query parameter
+
+    Returns:
+        HTML form page for entering decline reason
+    """
+    from config.database import DatabaseConnectionPool
+    from fastapi.responses import HTMLResponse
+
+    log = logger.bind(enquiry_id=id, endpoint="/api/enquiry-decline")
+    log.info("Enquiry decline page requested")
+
+    connection = None
+    try:
+        pool = DatabaseConnectionPool()
+        connection = pool.get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                be.id, be.status, be.user_message,
+                COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(e.name, '$.en')),
+                    JSON_UNQUOTE(JSON_EXTRACT(o.name, '$.en'))
+                ) as event_name
+            FROM booking_enquiries be
+            LEFT JOIN events e ON be.event_id = e.id
+            INNER JOIN organizers o ON be.organizer_id = o.id
+            WHERE be.id = %s
+        """, (id,))
+
+        enquiry = cursor.fetchone()
+
+        if not enquiry:
+            return HTMLResponse(content=_build_response_html(
+                "Enquiry Not Found",
+                "The enquiry you're looking for doesn't exist.",
+                success=False
+            ))
+
+        if enquiry['status'] in ('replied', 'confirmed', 'declined', 'completed'):
+            return HTMLResponse(content=_build_response_html(
+                "Already Responded",
+                f"This enquiry has already been {enquiry['status']}.",
+                success=False
+            ))
+
+        return HTMLResponse(content=_build_decline_form_html(
+            enquiry_id=id,
+            event_name=enquiry['event_name'],
+            user_message=enquiry['user_message']
+        ))
+
+    except Exception as e:
+        log.error("Error loading decline page", error=str(e))
+        return HTMLResponse(content=_build_response_html(
+            "Error",
+            f"An error occurred: {str(e)}",
+            success=False
+        ))
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+from pydantic import BaseModel, Field
+
+
+class EnquiryDeclineRequest(BaseModel):
+    """Request model for declining an enquiry."""
+    enquiry_id: int = Field(gt=0)
+    reason: str = Field(default="", max_length=2000)
+
+
+@app.post("/api/enquiry-decline")
+def handle_enquiry_decline(request: EnquiryDeclineRequest):
+    """
+    API endpoint for merchant to decline a booking enquiry with a reason.
+
+    This endpoint:
+    1. Validates the enquiry exists
+    2. Uses EnquiryResponseFormatter to generate a personalized decline message
+    3. Updates the enquiry status to 'declined'
+    4. Sends notification to the user with the reason
+    5. Updates conversation history
+
+    Args:
+        request: EnquiryDeclineRequest with enquiry_id and reason
+
+    Returns:
+        JSON response with status
+    """
+    from config.database import DatabaseConnectionPool
+    from ..llm.modules.EnquiryResponseFormatter import EnquiryResponseFormatter
+    from ..services.notification import NotificationService
+
+    log = logger.bind(enquiry_id=request.enquiry_id, endpoint="/api/enquiry-decline")
+    log.info("Enquiry decline received")
+
+    connection = None
+    try:
+        pool = DatabaseConnectionPool()
+        connection = pool.get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                be.id, be.session_id, be.user_message, be.contact_email,
+                be.contact_phone, be.event_id, be.status,
+                COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(e.name, '$.en')),
+                    JSON_UNQUOTE(JSON_EXTRACT(o.name, '$.en'))
+                ) as event_name
+            FROM booking_enquiries be
+            LEFT JOIN events e ON be.event_id = e.id
+            INNER JOIN organizers o ON be.organizer_id = o.id
+            WHERE be.id = %s
+        """, (request.enquiry_id,))
+
+        enquiry = cursor.fetchone()
+
+        if not enquiry:
+            log.warning("Enquiry not found")
+            return {"status": "error", "message": "Enquiry not found"}
+
+        if enquiry['status'] in ('replied', 'confirmed', 'declined', 'completed'):
+            log.warning("Enquiry already responded", status=enquiry['status'])
+            return {"status": "error", "message": f"Enquiry already {enquiry['status']}"}
+
+        # Generate decline message using LLM
+        formatter = EnquiryResponseFormatter()
+        formatted_message = formatter.format_decline(
+            user_enquiry=enquiry['user_message'],
+            event_name=enquiry['event_name'],
+            merchant_reason=request.reason
+        )
+
+        log.debug("Decline message generated", length=len(formatted_message))
+
+        # Store reply in database
+        cursor.execute("""
+            INSERT INTO enquiry_replies (enquiry_id, reply_from, reply_message, reply_channel)
+            VALUES (%s, 'merchant', %s, %s)
+        """, (request.enquiry_id, request.reason or "DECLINED", "email"))
+
+        # Update enquiry status
+        cursor.execute("""
+            UPDATE booking_enquiries SET status = 'declined' WHERE id = %s
+        """, (request.enquiry_id,))
+
+        connection.commit()
+
+        # Send notification to user
+        notification_service = NotificationService()
+        notification_result = notification_service.send_reply_to_user(
+            enquiry_id=request.enquiry_id,
+            event_name=enquiry['event_name'],
+            merchant_reply=formatted_message,
+            user_email=enquiry['contact_email'],
+            user_phone=enquiry.get('contact_phone')
+        )
+
+        if notification_result['success']:
+            log.info("User notification sent", channel=notification_result['channel'])
+        else:
+            log.warning("User notification failed", error=notification_result['message'])
+
+        # Update conversation history
+        if enquiry['session_id']:
+            try:
+                conversation = memory_manager.get_memory(enquiry['session_id'])
+                assistant_message = {"role": "assistant", "content": formatted_message}
+                new_messages = conversation.messages + [assistant_message]
+                new_conversation = dspy.History(messages=new_messages)
+                memory_manager.update_memory(enquiry['session_id'], new_conversation)
+            except Exception as e:
+                log.warning("Failed to update conversation history", error=str(e))
+
+        log.info("Enquiry declined successfully")
+        return {"status": "success", "message": "Decline sent to user"}
+
+    except Exception as e:
+        log.error("Error declining enquiry", error=str(e))
+        return {"status": "error", "message": str(e)}
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+def _build_response_html(title: str, message: str, success: bool) -> str:
+    """Build HTML response page for merchant actions."""
+    color = "#28a745" if success else "#dc3545"
+    icon = "✓" if success else "✗"
+
+    return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} - ShowEasy</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 40px 20px;">
+    <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">ShowEasy.ai</h1>
+        </div>
+        <div style="padding: 40px; text-align: center;">
+            <div style="width: 80px; height: 80px; background: {color}; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 40px;">{icon}</span>
+            </div>
+            <h2 style="color: #333; margin: 0 0 15px 0;">{title}</h2>
+            <p style="color: #666; margin: 0; line-height: 1.6;">{message}</p>
+        </div>
+        <div style="background: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+            <p style="color: #999; margin: 0; font-size: 12px;">You can close this page now.</p>
+        </div>
+    </div>
+</body>
+</html>
+    """.strip()
+
+
+def _build_decline_form_html(enquiry_id: int, event_name: str, user_message: str) -> str:
+    """Build HTML form for merchant to enter decline reason."""
+    return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decline Enquiry - ShowEasy</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 40px 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">ShowEasy.ai</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Decline Booking Enquiry</p>
+        </div>
+
+        <div style="padding: 30px;">
+            <div style="background: #f0f4ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <p style="margin: 0 0 5px 0; color: #667eea; font-weight: bold;">Event: {event_name}</p>
+                <p style="margin: 0; color: #666; font-size: 14px;">Enquiry #{enquiry_id}</p>
+            </div>
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0 0 5px 0; font-weight: bold; color: #856404;">Customer's Message:</p>
+                <p style="margin: 0; color: #666; font-size: 14px; white-space: pre-wrap;">{user_message}</p>
+            </div>
+
+            <form id="declineForm" style="margin-top: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">
+                    Reason for declining (optional):
+                </label>
+                <textarea
+                    name="reason"
+                    id="reason"
+                    placeholder="e.g., Fully booked, dates not available, special requirements cannot be met..."
+                    style="width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; box-sizing: border-box;"
+                ></textarea>
+                <p style="color: #666; font-size: 12px; margin: 8px 0 20px 0;">
+                    Your message will be personalized by our AI to deliver it professionally to the customer.
+                </p>
+
+                <div style="display: flex; gap: 10px;">
+                    <button
+                        type="submit"
+                        style="flex: 1; background: #dc3545; color: white; padding: 15px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;"
+                    >
+                        Decline Enquiry
+                    </button>
+                    <button
+                        type="button"
+                        onclick="window.history.back()"
+                        style="flex: 1; background: #6c757d; color: white; padding: 15px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('declineForm').addEventListener('submit', async function(e) {{
+            e.preventDefault();
+
+            const button = this.querySelector('button[type="submit"]');
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            try {{
+                const response = await fetch('/api/enquiry-decline', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        enquiry_id: {enquiry_id},
+                        reason: document.getElementById('reason').value
+                    }})
+                }});
+
+                const result = await response.json();
+
+                if (result.status === 'success') {{
+                    document.body.innerHTML = `
+                        <div style="font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 40px 20px; min-height: 100vh; box-sizing: border-box;">
+                            <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                                    <h1 style="color: white; margin: 0; font-size: 24px;">ShowEasy.ai</h1>
+                                </div>
+                                <div style="padding: 40px; text-align: center;">
+                                    <div style="width: 80px; height: 80px; background: #28a745; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                        <span style="color: white; font-size: 40px;">✓</span>
+                                    </div>
+                                    <h2 style="color: #333; margin: 0 0 15px 0;">Decline Sent</h2>
+                                    <p style="color: #666; margin: 0; line-height: 1.6;">The customer has been notified of your response.</p>
+                                </div>
+                                <div style="background: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+                                    <p style="color: #999; margin: 0; font-size: 12px;">You can close this page now.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }} else {{
+                    alert('Error: ' + result.message);
+                    button.disabled = false;
+                    button.textContent = 'Decline Enquiry';
+                }}
+            }} catch (error) {{
+                alert('Network error. Please try again.');
+                button.disabled = false;
+                button.textContent = 'Decline Enquiry';
+            }}
+        }});
+    </script>
+</body>
+</html>
+    """.strip()

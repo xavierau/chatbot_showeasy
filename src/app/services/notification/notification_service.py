@@ -79,15 +79,17 @@ class NotificationService:
         if channel_type == "log":
             logger.debug(f"[NotificationService] Creating LogNotificationChannel with path: {log_path}")
             return LogNotificationChannel(log_path=log_path)
-        # elif channel_type == "email":
-        #     return EmailNotificationChannel()  # Future implementation
+        elif channel_type == "email":
+            from .email_channel import EmailNotificationChannel
+            logger.debug("[NotificationService] Creating EmailNotificationChannel")
+            return EmailNotificationChannel()
         # elif channel_type == "whatsapp":
         #     return WhatsAppNotificationChannel()  # Future implementation
         else:
             logger.error(f"[NotificationService] Unknown channel type: {channel_type}")
             raise ValueError(
                 f"Unknown notification channel: {channel_type}. "
-                f"Supported channels: log, email (future), whatsapp (future)"
+                f"Supported channels: log, email, whatsapp (future)"
             )
 
     def send_enquiry_to_merchant(
