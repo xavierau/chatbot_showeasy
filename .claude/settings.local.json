@@ -27,7 +27,8 @@
       "Bash(PYTHONPATH=src .venv/bin/pytest:*)",
       "Bash(uv pip index:*)",
       "Bash(pip index:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python test_signature_fix.py:*)"
     ],
     "deny": [],
     "ask": []
