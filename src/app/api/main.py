@@ -5,7 +5,7 @@ from typing import Optional
 from ..models.UserInputRequest import UserInputRequest, GetMessagesRequest, MessageRequest
 from ..models import ABTestConfig, ModuleABConfig, ABVariant, EnquiryReplyRequest
 from ..llm.modules.ConversationOrchestrator import ConversationOrchestrator
-from ..memory_manager import MemoryManager, FileMemoryService
+from ..services.memory import MemoryManager, FileMemoryService
 from ..middleware.logging_middleware import LoggingMiddleware
 from config import configure_llm, configure_logging
 from ..utils.web_scraper import get_page_content
@@ -28,9 +28,42 @@ app.add_middleware(LoggingMiddleware)
 
 logger = structlog.get_logger(__name__)
 
-# Instantiate Memory Service and Manager
+# Instantiate Memory Service and Manager (short-term memory)
 file_memory_service = FileMemoryService()
 memory_manager = MemoryManager(memory_service=file_memory_service)
+
+# Mem0 long-term memory service (lazy initialization)
+_mem0_service = None
+
+
+def get_mem0_service():
+    """Lazy initialization of Mem0 service for long-term memory.
+
+    Returns:
+        Mem0Service instance or None if unavailable/disabled.
+
+    The service is initialized on first call and cached for subsequent requests.
+    If MEM0_ENABLED is set to "false", returns None immediately.
+    """
+    global _mem0_service
+
+    # Check if Mem0 is explicitly disabled
+    if os.getenv("MEM0_ENABLED", "true").lower() == "false":
+        return None
+
+    if _mem0_service is None:
+        try:
+            from ..services.mem0 import Mem0Service
+            _mem0_service = Mem0Service()
+            logger.info("Mem0 long-term memory service initialized successfully")
+        except Exception as e:
+            logger.warning(
+                "Mem0 service unavailable - continuing without long-term memory",
+                error=str(e)
+            )
+            _mem0_service = None
+
+    return _mem0_service
 
 
 def get_ab_test_config(user_id: str, session_id: str) -> Optional[ABTestConfig]:
@@ -41,7 +74,7 @@ def get_ab_test_config(user_id: str, session_id: str) -> Optional[ABTestConfig]:
     - Even distribution across variants
     - Reproducible results
 
-    Args:
+    Args: Hey, welcome.
         user_id: User identifier for consistent bucketing
         session_id: Session identifier (for logging)
 
@@ -133,10 +166,13 @@ def chat(request: UserInputRequest):
         log.info("AB test active", ab_config=ab_config)
 
     @observe()
-    def wrapper_function(message:str, content:str, ab_config: Optional[ABTestConfig] = None):
-        """Wrapper function with AB testing support.
+    def wrapper_function(message:str, content:str, user_id: str, ab_config: Optional[ABTestConfig] = None):
+        """Wrapper function with AB testing and long-term memory support.
 
         Args:
+            message: User's input message
+            content: Page content context
+            user_id: User identifier for Mem0 long-term memory
             ab_config: Optional AB testing configuration for nested modules.
                       If None, uses default configuration (all control).
 
@@ -159,12 +195,20 @@ def chat(request: UserInputRequest):
                 )
             )
         """
-        orchestrator = ConversationOrchestrator(ab_config=ab_config)
+        # Initialize orchestrator with Mem0 long-term memory
+        mem0_service = get_mem0_service()
+        orchestrator = ConversationOrchestrator(
+            ab_config=ab_config,
+            mem0_service=mem0_service
+        )
 
-        # Get response from orchestrator
-        prediction = orchestrator(user_message=message,
-                                  previous_conversation=previous_conversation,
-                                  page_context=content)
+        # Get response from orchestrator with user_id for memory lookup
+        prediction = orchestrator(
+            user_message=message,
+            previous_conversation=previous_conversation,
+            page_context=content,
+            user_id=user_id
+        )
 
         # Log AB test metadata to Langfuse (skip if unavailable)
         if langfuse:
@@ -190,13 +234,15 @@ def chat(request: UserInputRequest):
                                     "variant": ab_config.agent.variant.value,
                                     "description": ab_config.agent.description
                                 }
-                            }
+                            },
+                            "mem0_enabled": mem0_service is not None
                         }
                     )
                 else:
                     langfuse.update_current_trace(
                         user_id=request.user_id,
                         session_id=request.session_id,
+                        metadata={"mem0_enabled": mem0_service is not None}
                     )
             except Exception:
                 pass  # Langfuse unavailable, skip tracing
@@ -206,18 +252,33 @@ def chat(request: UserInputRequest):
     response_content = wrapper_function(
          message=request.user_input,
          content=request.page_content,
+         user_id=str(request.user_id) if request.user_id else str(uuid.uuid4()),
          ab_config=ab_config)
 
     log.debug("Orchestrator response generated", response_length=len(response_content))
 
-    # Create new messages in dspy.History format
+    # ===== Update Short-Term Memory (Conversation History) =====
     user_message = {"role": "user", "content": request.user_input}
     assistant_message = {"role": "assistant", "content": response_content}
 
-    # Update conversation history with dspy.History
-    new_messages = previous_conversation.messages + [user_message, assistant_message]
-    new_conversation = dspy.History(messages=new_messages)
-    memory_manager.update_memory(request.session_id, new_conversation)
+    # Append new messages without reading entire history first
+    memory_manager.append_messages(request.session_id, [user_message, assistant_message])
+
+    # ===== Update Long-Term Memory (Mem0) =====
+    mem0_service = get_mem0_service()
+    if mem0_service:
+        try:
+            user_id_str = str(request.user_id) if request.user_id else str(uuid.uuid4())
+            mem0_service.add_conversation(
+                user_message=request.user_input,
+                assistant_message=response_content,
+                user_id=user_id_str,
+                session_id=request.session_id
+            )
+            log.debug("Long-term memory updated via Mem0")
+        except Exception as e:
+            log.warning("Failed to update long-term memory", error=str(e))
+            # Non-critical - continue without blocking response
 
     log.info("Chat request completed successfully")
     return {"message": response_content}
@@ -227,7 +288,7 @@ def get_messages(request: GetMessagesRequest):
     log = logger.bind(session_id=request.session_id, endpoint="/chat/messages")
     log.info("Retrieving messages")
 
-    history = memory_manager.get_memory(request.session_id)
+    history = memory_manager.get_memory(request.session_id, 5)
 
     # Add UUID to each message dict
     messages_array = []
@@ -269,14 +330,20 @@ def receive_message(request: MessageRequest):
         log.info("AB test active", ab_config=ab_config)
 
     @observe()
-    def process_message(message: str, ab_config: Optional[ABTestConfig] = None):
-        """Process message through the conversation orchestrator."""
-        orchestrator = ConversationOrchestrator(ab_config=ab_config)
+    def process_message(message: str, user_id: str, ab_config: Optional[ABTestConfig] = None):
+        """Process message through the conversation orchestrator with long-term memory."""
+        # Initialize orchestrator with Mem0 long-term memory
+        mem0_service = get_mem0_service()
+        orchestrator = ConversationOrchestrator(
+            ab_config=ab_config,
+            mem0_service=mem0_service
+        )
 
         prediction = orchestrator(
             user_message=message,
             previous_conversation=previous_conversation,
-            page_context=None
+            page_context=None,
+            user_id=user_id
         )
 
         # Log AB test metadata to Langfuse (skip if unavailable)
@@ -303,30 +370,49 @@ def receive_message(request: MessageRequest):
                                     "variant": ab_config.agent.variant.value,
                                     "description": ab_config.agent.description
                                 }
-                            }
+                            },
+                            "mem0_enabled": mem0_service is not None
                         }
                     )
                 else:
                     langfuse.update_current_trace(
                         user_id=user_id,
                         session_id=session_id,
+                        metadata={"mem0_enabled": mem0_service is not None}
                     )
             except Exception:
                 pass  # Langfuse unavailable, skip tracing
 
         return prediction.answer
 
-    response_content = process_message(message=request.message, ab_config=ab_config)
+    response_content = process_message(
+        message=request.message,
+        user_id=user_id,
+        ab_config=ab_config
+    )
     log.debug("Orchestrator response generated", response_length=len(response_content))
 
-    # Create new messages in dspy.History format
+    # ===== Update Short-Term Memory (Conversation History) =====
     user_message = {"role": "user", "content": request.message}
     assistant_message = {"role": "assistant", "content": response_content}
 
-    # Update conversation history with dspy.History
-    new_messages = previous_conversation.messages + [user_message, assistant_message]
-    new_conversation = dspy.History(messages=new_messages)
-    memory_manager.update_memory(session_id, new_conversation)
+    # Append new messages without reading entire history first
+    memory_manager.append_messages(session_id, [user_message, assistant_message])
+
+    # ===== Update Long-Term Memory (Mem0) =====
+    mem0_service = get_mem0_service()
+    if mem0_service:
+        try:
+            mem0_service.add_conversation(
+                user_message=request.message,
+                assistant_message=response_content,
+                user_id=user_id,
+                session_id=session_id
+            )
+            log.debug("Long-term memory updated via Mem0")
+        except Exception as e:
+            log.warning("Failed to update long-term memory", error=str(e))
+            # Non-critical - continue without blocking response
 
     log.info("Message processed successfully")
     return {
@@ -451,11 +537,9 @@ def handle_enquiry_reply(request: EnquiryReplyRequest):
         # Step 6: Add reply to conversation history if session exists
         if enquiry['session_id']:
             try:
-                conversation = memory_manager.get_memory(enquiry['session_id'])
                 assistant_message = {"role": "assistant", "content": formatted_message}
-                new_messages = conversation.messages + [assistant_message]
-                new_conversation = dspy.History(messages=new_messages)
-                memory_manager.update_memory(enquiry['session_id'], new_conversation)
+                # Append new message without reading entire history first
+                memory_manager.append_messages(enquiry['session_id'], [assistant_message])
 
                 log.debug("Conversation history updated", session_id=enquiry['session_id'])
             except Exception as e:
@@ -580,11 +664,9 @@ def handle_enquiry_confirm(id: int):
         # Update conversation history
         if enquiry['session_id']:
             try:
-                conversation = memory_manager.get_memory(enquiry['session_id'])
                 assistant_message = {"role": "assistant", "content": formatted_message}
-                new_messages = conversation.messages + [assistant_message]
-                new_conversation = dspy.History(messages=new_messages)
-                memory_manager.update_memory(enquiry['session_id'], new_conversation)
+                # Append new message without reading entire history first
+                memory_manager.append_messages(enquiry['session_id'], [assistant_message])
             except Exception as e:
                 log.warning("Failed to update conversation history", error=str(e))
 
@@ -787,11 +869,9 @@ def handle_enquiry_decline(request: EnquiryDeclineRequest):
         # Update conversation history
         if enquiry['session_id']:
             try:
-                conversation = memory_manager.get_memory(enquiry['session_id'])
                 assistant_message = {"role": "assistant", "content": formatted_message}
-                new_messages = conversation.messages + [assistant_message]
-                new_conversation = dspy.History(messages=new_messages)
-                memory_manager.update_memory(enquiry['session_id'], new_conversation)
+                # Append new message without reading entire history first
+                memory_manager.append_messages(enquiry['session_id'], [assistant_message])
             except Exception as e:
                 log.warning("Failed to update conversation history", error=str(e))
 

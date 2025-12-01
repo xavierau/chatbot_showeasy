@@ -28,7 +28,88 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Valid enquiry types - must match database constraint chk_enquiry_type
-VALID_ENQUIRY_TYPES = {'custom_booking', 'group_booking', 'special_request'}
+VALID_ENQUIRY_TYPES = {'ticket_booking', 'custom_booking', 'group_booking', 'special_request'}
+
+
+def _infer_enquiry_type(
+    user_message: str,
+    event_id: Optional[int] = None,
+    merchant_name: Optional[str] = None,
+    provided_type: Optional[str] = None
+) -> str:
+    """
+    Smart inference of enquiry type based on context.
+
+    Inference Rules (in priority order):
+    1. Always analyze message content for special indicators (group, wheelchair, etc.)
+    2. If special indicators found → use inferred type (overrides provided_type)
+    3. If no special indicators and provided_type is valid → use provided_type
+    4. Otherwise, use mode-based default:
+       - event_id provided → 'ticket_booking'
+       - merchant_name provided → 'custom_booking'
+
+    This ensures that when agent passes default 'custom_booking' but event_id is provided,
+    we correctly infer 'ticket_booking' unless there are special indicators.
+
+    Args:
+        user_message: User's enquiry message
+        event_id: Event ID if provided (event-based enquiry)
+        merchant_name: Merchant name if provided (merchant-based enquiry)
+        provided_type: Provided enquiry type (may be default, not explicit)
+
+    Returns:
+        Inferred enquiry type (one of VALID_ENQUIRY_TYPES)
+    """
+
+    # Convert message to lowercase for pattern matching
+    msg_lower = user_message.lower()
+
+    # Group booking indicators
+    group_indicators = [
+        'group', '團體', '公司', 'corporate', 'company',
+        'school', '學校', 'organization', '機構',
+        '20', '30', '40', '50', '100',  # Large numbers
+        'bulk', 'wholesale', '批量'
+    ]
+
+    # Special request indicators
+    special_indicators = [
+        'wheelchair', '輪椅', 'accessibility', '無障礙',
+        'special need', '特殊需求', 'disability', '殘障',
+        'private', '私人', 'vip', 'exclusive', '專屬',
+        'customiz', '定制', '客製'
+    ]
+
+    # Priority 1: Check for group booking indicators (overrides everything)
+    if any(indicator in msg_lower for indicator in group_indicators):
+        logger.debug(f"[EnquiryTypeInference] Group indicator detected → group_booking (overrides provided_type)")
+        return 'group_booking'
+
+    # Priority 2: Check for special request indicators (overrides everything)
+    if any(indicator in msg_lower for indicator in special_indicators):
+        logger.debug(f"[EnquiryTypeInference] Special request indicator detected → special_request (overrides provided_type)")
+        return 'special_request'
+
+    # Priority 3: No special indicators found - determine based on mode
+    # If event_id is provided, it's an event-based enquiry → ticket_booking
+    # If merchant_name is provided, it's a merchant-based enquiry → custom_booking
+    # The provided_type is ignored when mode clearly indicates the type
+    if event_id:
+        # Event-based: user has identified specific event → standard ticket booking
+        logger.debug(f"[EnquiryTypeInference] Event-based enquiry (event_id={event_id}) → ticket_booking")
+        return 'ticket_booking'
+    elif merchant_name:
+        # Merchant-based: general merchant contact → custom booking
+        logger.debug(f"[EnquiryTypeInference] Merchant-based enquiry (merchant_name={merchant_name}) → custom_booking")
+        return 'custom_booking'
+    elif provided_type and provided_type in VALID_ENQUIRY_TYPES:
+        # Fallback: use provided type if valid (shouldn't reach here in normal flow)
+        logger.debug(f"[EnquiryTypeInference] Using provided_type as fallback: {provided_type}")
+        return provided_type
+    else:
+        # Final fallback: custom_booking
+        logger.warning(f"[EnquiryTypeInference] No mode detected, defaulting to custom_booking")
+        return 'custom_booking'
 
 
 @contextmanager
@@ -82,10 +163,11 @@ def _create_booking_enquiry(
         event_id: The event ID to enquire about (Optional - for event-based enquiries)
         merchant_name: Merchant/organizer name (Optional - for direct merchant enquiries)
         contact_phone: User's contact phone (optional)
-        enquiry_type: Type of enquiry - one of:
-            - 'custom_booking': Custom booking arrangements (default)
-            - 'group_booking': Large group or corporate bookings
-            - 'special_request': Special accommodations or questions
+        enquiry_type: Type of enquiry (auto-inferred if not provided):
+            - 'ticket_booking': Standard event ticket booking (auto-set when event_id provided)
+            - 'group_booking': Large group or corporate bookings (20+ people)
+            - 'special_request': Special accommodations (accessibility, VIP, private showings)
+            - 'custom_booking': General merchant enquiry (auto-set when merchant_name provided)
         session_id: Session ID for tracking conversation context (optional)
 
     Returns:
@@ -138,10 +220,13 @@ def _create_booking_enquiry(
             "message": "Please provide either event_id OR merchant_name, not both."
         }
 
-    # Validate and normalize enquiry_type
-    if enquiry_type not in VALID_ENQUIRY_TYPES:
-        logger.warning(f"[BookingEnquiry] Invalid enquiry_type '{enquiry_type}', defaulting to 'custom_booking'. Valid types: {VALID_ENQUIRY_TYPES}")
-        enquiry_type = 'custom_booking'
+    # Smart inference of enquiry type
+    enquiry_type = _infer_enquiry_type(
+        user_message=user_message,
+        event_id=event_id,
+        merchant_name=merchant_name,
+        provided_type=enquiry_type
+    )
 
     mode = 'event-based' if event_id else 'merchant-based'
     logger.info(f"[BookingEnquiry] Parameter validation passed. Mode: {mode}, enquiry_type: {enquiry_type}")
@@ -302,26 +387,36 @@ def _create_booking_enquiry(
 BookingEnquiry = dspy.Tool(
     func=_create_booking_enquiry,
     name="booking_enquiry",
-    desc="""Send a booking enquiry to event organizers/merchants.
+    desc="""Send a booking enquiry to event organizers/merchants with SMART TYPE INFERENCE.
 
 This tool supports TWO modes:
 1. EVENT-BASED ENQUIRY: For specific events (concerts, shows, performances)
 2. MERCHANT-BASED ENQUIRY: For restaurants, meal packages, or general merchant enquiries
 
+SMART TYPE INFERENCE:
+The tool automatically determines the correct enquiry_type based on:
+- Mode (event_id vs merchant_name)
+- User message content (keywords like 'group', 'wheelchair', 'corporate', etc.)
+- You DON'T need to specify enquiry_type in most cases - it's auto-inferred!
+
+Enquiry Types (auto-selected):
+- 'ticket_booking': Standard event ticket booking (when event_id provided, no special indicators)
+- 'group_booking': Large groups (keywords: group, 20+, corporate, school, company)
+- 'special_request': Special needs (keywords: wheelchair, accessibility, private, VIP, exclusive)
+- 'custom_booking': General merchant enquiry (when merchant_name provided)
+
 Use this tool when users want to:
-- Request custom booking arrangements or special packages
-- Book large groups, corporate events, or school trips (usually 20+ people)
+- Book tickets for a specific event (after SearchEvent provides event_id)
+- Book large groups, corporate events, or school trips (20+ people)
 - Make restaurant reservations or enquire about meal packages
-- Ask organizers specific questions before purchasing tickets
-- Request customizations, special accommodations, or accessibility support
-- Inquire about group discounts or corporate rates
-- Ask about private bookings or exclusive access
-- Contact a restaurant/merchant directly without a specific event
+- Request special accommodations (accessibility, VIP, private showings)
+- Ask organizers questions before purchasing
+- Contact a merchant directly
 
 DO NOT use this tool for:
-- General questions about tickets (use TicketInfo instead)
-- Standard ticket purchases (users should buy through the platform)
-- Questions about membership (use MembershipInfo instead)
+- General questions about tickets (use DocumentDetail/DocumentSummary)
+- Platform information (use DocumentDetail/DocumentSummary)
+- Questions about membership (use DocumentDetail for membership docs)
 
 Required Parameters (ALWAYS):
 - user_message: User's detailed enquiry message
@@ -333,25 +428,36 @@ Mode Selection (MUST provide ONE):
 
 Optional Parameters:
 - contact_phone: User's phone number
-- enquiry_type: One of 'custom_booking', 'group_booking', 'special_request' (default: 'custom_booking')
+- enquiry_type: Override auto-inference (rarely needed)
 
-Example Scenarios:
+Example Scenarios with AUTO-INFERENCE:
 
 EVENT-BASED (use event_id):
-- "I want to book 50 tickets for the Jazz Concert" → use event_id from SearchEvent, enquiry_type='group_booking'
-- "Can we have a private showing of the Opera?" → use event_id, enquiry_type='special_request'
-- "I need wheelchair access for 5 people at the Theater Show" → use event_id, enquiry_type='special_request'
+✅ "I want to book tickets for nemo culpa eum"
+   → event_id=9 → AUTO: ticket_booking (standard booking)
+
+✅ "I want to book 50 tickets for the Jazz Concert"
+   → event_id from SearchEvent → AUTO: group_booking (detected '50')
+
+✅ "Can we have a private showing of the Opera?"
+   → event_id → AUTO: special_request (detected 'private')
+
+✅ "I need wheelchair access for 5 people at the Theater Show"
+   → event_id → AUTO: special_request (detected 'wheelchair')
 
 MERCHANT-BASED (use merchant_name):
-- "I want to make a reservation at ABC Restaurant" → use merchant_name='ABC Restaurant', enquiry_type='custom_booking'
-- "Does XYZ Dining offer meal packages for 20 people?" → use merchant_name='XYZ Dining', enquiry_type='group_booking'
-- "I want to contact The Fine Bistro about their special menu" → use merchant_name='The Fine Bistro', enquiry_type='custom_booking'
+✅ "I want to make a reservation at ABC Restaurant"
+   → merchant_name='ABC Restaurant' → AUTO: custom_booking
+
+✅ "Does XYZ Dining offer packages for 30 people?"
+   → merchant_name='XYZ Dining' → AUTO: group_booking (detected '30')
 
 The tool will:
-1. Find the merchant's contact information (via event or merchant name)
-2. Create an enquiry record (event_id will be NULL for merchant-based enquiries)
-3. Send notification to the merchant
-4. Provide the user with a reference number
+1. Infer the correct enquiry_type automatically
+2. Find merchant contact information (via event or merchant name)
+3. Create an enquiry record with correct type
+4. Send notification to the merchant
+5. Provide the user with a reference number
 
 Return format: Dictionary with status, message, and enquiry_id (if successful)"""
 )

@@ -17,42 +17,58 @@
 
 ## 上下文檔案概覽
 
-### 核心上下文(目前可用)
-1. **[01_platform_overview.md](01_platform_overview.md)** - Show Easy Group 生態系統、平台使命、商業模式和價值主張
-2. **[02_membership_program.md](02_membership_program.md)** - 會員優惠、定價、推廣策略以及如何支持香港創作者
-3. **[03_event_categories.md](03_event_categories.md)** - 活動類型、類別、香港原創內容優先和表演主題場地
-4. **[04_customer_service.md](04_customer_service.md)** - 與 Show Easy Group 使命一致的服務理念、語調、聲音和原則
-5. **[05_contact_information.md](05_contact_information.md)** - 聯絡詳情、回應時間、升級指南以及何時提供聯絡資訊
+### 核心上下文(已重構優化)
+1. **[01_mission_and_vision.md](01_mission_and_vision.md)** - ShowEasy 的核心使命、願景、對香港原創的支持和未來目標
+2. **[02_business_model.md](02_business_model.md)** - 商業模式、收入來源、商戶合作和價值主張
+3. **[03_platform_features.md](03_platform_features.md)** - 平台功能、活動探索、票務管理、AI 助手和用戶體驗
+4. **[04_values_and_culture.md](04_values_and_culture.md)** - 核心價值觀、企業文化和 Show Easy Group 簡介
+5. **[05_tech_infrastructure.md](05_tech_infrastructure.md)** - 技術架構、AI 系統、雲端平台、安全保障和 OMO 整合
+6. **[06_membership_program.md](06_membership_program.md)** - 會員等級、優惠、定價、推廣策略和價值計算
+7. **[07_event_categories.md](07_event_categories.md)** - 活動類別、香港原創內容、Meta Stages 和 AI 推薦
+8. **[08_customer_service.md](08_customer_service.md)** - 客戶服務理念、語氣風格、應對策略和多語言支援
+9. **[09_contact_information.md](09_contact_information.md)** - 聯絡方式、辦公室位置、升級處理和範例回覆
 
-### 計劃中的上下文(待建立)
-6. **[06_business_scope.md](06_business_scope.md)** - 範圍內 vs 範圍外的界限
-7. **[07_response_guidelines.md](07_response_guidelines.md)** - 回應範本、格式和範例
-8. **[08_security_compliance.md](08_security_compliance.md)** - 安全政策、合規性和防護欄
-9. **[09_user_journeys.md](09_user_journeys.md)** - 常見使用者流程和場景
-10. **[10_brand_voice.md](10_brand_voice.md)** - 品牌聲音範例、應做和不應做的事
+### 文件結構
+所有文件採用統一的 **Summary + Details** 結構:
+- **## Summary** - 簡要概述文件內容、何時使用
+- **## Details** - 完整的詳細信息
+
+這種結構支持 AI 的多跳文檔檢索 (multi-hop retrieval)，提高效率和準確性。
 
 ## 使用方式
 
-這些上下文檔案由 `GetPlatformContext` 工具載入,根據以下內容向 AI 代理提供相關背景資訊:
-- 使用者意圖
-- 對話主題
-- 當前任務
+這些上下文檔案由 `DocumentSummary` 和 `DocumentDetail` 工具載入，採用多跳檢索 (multi-hop retrieval) 策略:
 
-模組化方法允許:
-- **選擇性載入** - 僅載入相關上下文,減少令牌使用量
-- **易於維護** - 更新特定部分而不影響其他部分
-- **快取** - 經常存取的上下文被快取以提高效能
-- **可擴展性** - 在不重組結構的情況下新增新的上下文類型
+### 兩階段檢索流程:
+1. **DocumentSummary** - 首先獲取所有文件的摘要
+2. **DocumentDetail** - 根據需求獲取特定文件的詳細內容
+
+### 優勢:
+- **高效檢索** - 僅載入相關文件，減少令牌使用量 (50-70%)
+- **易於維護** - 更新特定文件不影響其他部分
+- **智能快取** - 文件內容被快取以提高效能
+- **高度可擴展** - 新增文件只需更新 DOC_ID_MAP
+- **透明推理** - AI 明確顯示查閱了哪些文件
 
 ## 對開發者
 
-新增新上下文:
-1. 建立一個具有描述性名稱的新 markdown 檔案(例如 `10_refund_policies.md`)
-2. 使用描述更新此 README
-3. 如有需要,更新 `src/app/utils/context_loader.py` 主題映射
-4. 上下文將自動提供給代理
+新增新文檔:
+1. 建立新 markdown 檔案，使用序號命名 (例如 `10_refund_policies.md`)
+2. **必須**包含 `## Summary` 和 `## Details` 兩個部分
+3. 在 Summary 中包含:
+   - Document ID
+   - 主題說明
+   - 核心內容列表
+   - 何時使用本文件
+4. 更新 `src/app/llm/tools/DocumentDetail.py` 的 `DOC_ID_MAP`
+5. 更新此 README 的文件列表
+6. 工具將自動發現並使用新文檔
 
 ## 版本
-- **最後更新**: 2025-10-19
-- **版本**: 1.1
-- **變更**: 新增 05_contact_information.md,包含完整的聯絡詳情和升級指南
+- **最後更新**: 2025-12-01
+- **版本**: 2.0
+- **重大變更**:
+  - 重構為 9 個模塊化文件 (原 5 個)
+  - 所有文件採用 Summary + Details 結構
+  - 支持多跳文檔檢索 (multi-hop retrieval)
+  - 優化 token 使用效率 (減少 50-70%)

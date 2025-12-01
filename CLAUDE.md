@@ -150,9 +150,8 @@ User Input → PreGuardrails → ReAct Agent → PostGuardrails → Response
    - Available tools (order matters - Thinking is first):
      - `Thinking`: Working memory for reasoning
      - `SearchEvent`: Event discovery and search
-     - `MembershipInfo`: Membership benefits and upgrades
-     - `TicketInfo`: Ticket purchasing assistance
-     - `GeneralHelp`: Platform help and contact info
+     - `DocumentSummary`: Get documentation index/summaries
+     - `DocumentDetail`: Fetch specific documentation files
      - `BookingEnquiry`: Send custom booking enquiries to merchants
    - Uses `ConversationSignature` for conversation handling
 
@@ -166,7 +165,7 @@ User Input → PreGuardrails → ReAct Agent → PostGuardrails → Response
 **Tools** (`src/app/llm/tools/`)
 - Each tool is a DSPy module handling one domain
 - Tools follow Single Responsibility Principle
-- Located at: `SearchEvent.py`, `MembershipInfo.py`, `TicketInfo.py`, `GeneralHelp.py`, `Thinking.py`, `BookingEnquiry.py`
+- Located at: `SearchEvent.py`, `Thinking.py`, `DocumentSummary.py`, `DocumentDetail.py`, `BookingEnquiry.py`
 
 **Signatures** (`src/app/llm/signatures/`)
 - DSPy signatures define input/output contracts
@@ -290,6 +289,56 @@ Example prompt: *"@agent-dspy-expert Create a new DSPy tool called VenueRecommen
 4. Export from `src/app/llm/signatures/__init__.py`
 
 Example prompt: *"@agent-dspy-expert Design a signature for venue recommendations with event type, location, and user preferences as inputs"*
+
+### Multi-Hop Documentation Retrieval
+
+The chatbot uses a two-tool system for scalable document access:
+
+**Pattern:**
+1. **DocumentSummary** - Get high-level overview first
+2. **DocumentDetail** - Fetch specific documents based on analysis
+
+**Example Flow:**
+```
+User: "How much is membership and what are the benefits?"
+
+Agent Reasoning:
+1. Thinking: Analyze question → needs membership information
+2. DocumentSummary: Get all doc summaries
+3. Analyze summaries → Doc 02 (Membership) is relevant
+4. DocumentDetail(doc_ids="02"): Fetch full membership details
+5. Answer with pricing and benefits
+```
+
+**Benefits:**
+- Reduces context usage (only load relevant docs)
+- Scalable (new docs don't require new tools)
+- Transparent reasoning (LLM shows which docs it's consulting)
+
+**Adding New Documents:**
+1. Create new MD file in `docs/context/zh-TW/`
+2. Use numbered prefix (06_, 07_, etc.)
+3. Include `## Summary` and `## Details` sections
+4. Update `DOC_ID_MAP` in `src/app/llm/tools/DocumentDetail.py`
+5. Tools automatically discover new documents
+
+**Document Structure:**
+```markdown
+# Document Title
+
+## Summary
+Brief overview of the document:
+- Key topic 1
+- Key topic 2
+- Key topic 3
+
+Document ID: 06
+Covers: [High-level description]
+
+## Details
+
+[Full content here...]
+```
 
 ## Testing Guardrails
 
@@ -417,7 +466,13 @@ User ← Conversation History ← LLM Analyzer ← API Endpoint ← Merchant Rep
 - `user_message` (required): User's enquiry message
 - `contact_email` (required): User's email for replies
 - `contact_phone` (optional): User's phone
-- `enquiry_type` (optional): 'custom_booking', 'group_booking', 'special_request'
+- `enquiry_type` (optional, auto-inferred): 'ticket_booking', 'group_booking', 'special_request', 'custom_booking'
+
+**Smart Type Inference:**
+The tool automatically infers the correct enquiry_type based on:
+- Mode (event_id provided → defaults to 'ticket_booking')
+- Message content (keywords: 'group', '50', 'corporate', 'wheelchair', 'private', etc.)
+- No need to specify enquiry_type in most cases!
 
 **Returns:**
 ```python
@@ -549,7 +604,9 @@ CREATE TABLE booking_enquiries (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     INDEX idx_user_session (user_id, session_id),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+
+    CONSTRAINT chk_enquiry_type CHECK (enquiry_type IN ('ticket_booking', 'custom_booking', 'group_booking', 'special_request'))
 );
 ```
 
@@ -574,6 +631,25 @@ CREATE TABLE enquiry_replies (
 
 #### Creating an Enquiry via Chatbot
 
+**Example 1: Standard Ticket Booking**
+```
+User: I want to book tickets for nemo culpa eum
+
+Agent: [Uses Thinking] User wants to book tickets
+       [Uses SearchEvent] Finds event ID 9
+       [Uses BookingEnquiry]
+         - event_id: 9
+         - user_message: "我想訂飛"
+         - contact_email: "peter.chan@gmail.com"
+         - enquiry_type: AUTO → "ticket_booking" (event_id provided, no special indicators)
+
+Agent Response: "Your enquiry has been sent to the event organizer.
+                 Reference: #789. They will respond within 24-48 hours."
+
+[Database: enquiry created with type='ticket_booking', notification sent]
+```
+
+**Example 2: Group Booking (Auto-Detected)**
 ```
 User: I want to book 50 tickets for my company event to the Concert on Dec 15
 
@@ -582,12 +658,13 @@ Agent: [Uses Thinking] User wants group booking
        [Uses BookingEnquiry]
          - event_id: 123
          - user_message: "Group booking for 50 people..."
-         - enquiry_type: "group_booking"
+         - contact_email: from session
+         - enquiry_type: AUTO → "group_booking" (detected '50' and 'company')
 
 Agent Response: "Your enquiry has been sent to the event organizer.
                  Reference: #456. They will respond within 24-48 hours."
 
-[Database: enquiry created, notification sent to merchant]
+[Database: enquiry created with type='group_booking', notification sent]
 ```
 
 #### Merchant Submitting Reply

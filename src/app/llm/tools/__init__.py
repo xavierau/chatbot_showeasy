@@ -1,15 +1,13 @@
 from .SearchEvent import SearchEvent
-from .MembershipInfo import MembershipInfo
-from .TicketInfo import TicketInfo
-from .GeneralHelp import GeneralHelp
 from .Thinking import Thinking
 from .BookingEnquiry import BookingEnquiry
+from .DocumentSummary import DocumentSummary
+from .DocumentDetail import DocumentDetail
 
 __all__ = [
     "SearchEvent",
-    "MembershipInfo",
-    "TicketInfo",
-    "GeneralHelp",
     "Thinking",
     "BookingEnquiry",
+    "DocumentSummary",
+    "DocumentDetail",
 ]

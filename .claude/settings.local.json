@@ -21,7 +21,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv pip show:*)",
+      "Bash(PYTHONPATH=src .venv/bin/pytest:*)",
+      "Bash(uv pip index:*)",
+      "Bash(pip index:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
