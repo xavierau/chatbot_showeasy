@@ -67,6 +67,7 @@ Thumbs.db
 
 # Project specific
 *.log
+logs/
 memory_storage/
 cache/
 
